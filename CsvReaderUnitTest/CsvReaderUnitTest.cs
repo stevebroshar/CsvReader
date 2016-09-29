@@ -212,10 +212,24 @@ namespace CsvReaderUnitTest
         public void ReadRecord_ReturnsValuesDelimitedByColonOrSemicolon()
         {
             var reader = CsvReader.CsvReader.Parse("a:b;c");
-            reader.SetDelimiters(new[] { ':', ';' });
+            reader.SetDelimiters(':', ';');
             CollectionAssert.AreEqual(new[] { "a", "b", "c" }, reader.ReadRecord().ToArray());
         }
-        
+
+        #endregion
+
+        #region Comment Lines
+
+        [TestMethod]
+        public void ReadRecord_IgnoresLineStartingWithCommentChar()
+        {
+            var reader = CsvReader.CsvReader.Parse($"a{Environment.NewLine}#comment{Environment.NewLine}b{Environment.NewLine}$comment{Environment.NewLine}c");
+            reader.SetCommentChars('#', '$');
+            Assert.AreEqual("a", reader.ReadRecord().First());
+            Assert.AreEqual("b", reader.ReadRecord().First());
+            Assert.AreEqual("c", reader.ReadRecord().First());
+        }
+
         #endregion
     }
 }

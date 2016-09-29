@@ -16,11 +16,11 @@ namespace CsvReader
     /// obvious aspects of CSV and supports switches to control some of the more contentious 
     /// behaviors ... such as:
     /// 
-    /// Custom Delimiters [TODO]
+    /// Custom Delimiters
     /// Why would someone want to use a delimiter other than comma?  Well, tab is somewhat common.
     /// And, the implementation is easy and the performance impact is none.  So why not?
     /// 
-    /// Comment Lines [TODO]
+    /// Comment Lines
     /// There is no mention of comment lines in the psuedo-official documents about CSV. But there's
     /// plenty of talk about people using comment lines.  So, it seems the people want
     /// this feature.  So, why not?
@@ -198,10 +198,16 @@ namespace CsvReader
 
         private readonly Buffer _buffer;
         public HashSet<char> _delimiters = new HashSet<char> { ',' };
+        public HashSet<char> _commentChars = null;
 
-        public void SetDelimiters(IEnumerable<char> delimiters)
+        public void SetDelimiters(params char[] delimiters)
         {
             _delimiters = new HashSet<char>(delimiters);
+        }
+
+        public void SetCommentChars(params char[] chars)
+        {
+            _commentChars = new HashSet<char>(chars);
         }
 
         /// <summary>
@@ -230,10 +236,16 @@ namespace CsvReader
                 return null;
 
             // consume whitespace lines
+            if (_commentChars != null)
+                if (!_buffer.EndOfLine & _commentChars.Contains(_buffer.Char))
+                    _buffer.ConsumeWhile(c=> true);
             ConsumeWhitespace(_buffer);
             while (!_buffer.EndOfData && _buffer.EndOfLine)
             {
                 _buffer.NextLine();
+                if (_commentChars != null)
+                    if (!_buffer.EndOfLine & _commentChars.Contains(_buffer.Char))
+                        _buffer.ConsumeWhile(c => true);
                 ConsumeWhitespace(_buffer);
             }
             if (_buffer.EndOfData)
