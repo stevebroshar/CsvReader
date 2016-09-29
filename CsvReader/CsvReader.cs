@@ -197,7 +197,12 @@ namespace CsvReader
         }
 
         private readonly Buffer _buffer;
-        private readonly HashSet<char> _delimiters = new HashSet<char> { ',' };
+        public HashSet<char> _delimiters = new HashSet<char> { ',' };
+
+        public void SetDelimiters(IEnumerable<char> delimiters)
+        {
+            _delimiters = new HashSet<char>(delimiters);
+        }
 
         /// <summary>
         /// Initialize for a TextReader.

@@ -205,5 +205,17 @@ namespace CsvReaderUnitTest
         }
 
         #endregion
+
+        #region Custom Delimiters
+
+        [TestMethod]
+        public void ReadRecord_ReturnsValuesDelimitedByColonOrSemicolon()
+        {
+            var reader = CsvReader.CsvReader.Parse("a:b;c");
+            reader.SetDelimiters(new[] { ':', ';' });
+            CollectionAssert.AreEqual(new[] { "a", "b", "c" }, reader.ReadRecord().ToArray());
+        }
+        
+        #endregion
     }
 }
