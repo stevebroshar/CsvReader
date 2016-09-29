@@ -9,7 +9,8 @@ namespace CsvReader
     /// Many try to do too much making them too specialized and therefore not useful in general 
     /// contexts.  Some are overly complicated to use.  Some run slow.  As an example, Microsoft's 
     /// TextFieldParser is pretty good, but has some fatal flaws.  It ignores blank lines in a quoted
-    /// value.  And, it strips whitespace from quoted values.
+    /// value.  And, it strips whitespace from quoted values.  And, it's relatively slow.  Other than
+    /// that it's great ;)
     /// 
     /// This implementation is intended to be fast and correct.  Of course, since there is no 
     /// standard for CSV, correct is somewhat subjective.  This is written to conform to the 
@@ -19,14 +20,15 @@ namespace CsvReader
     /// Custom Delimiters
     /// Why would someone want to use a delimiter other than comma ... for something called "COMMA
     /// separated values"?  Well, tab is somewhat common.  And, the implementation is easy and the 
-    /// performance impact is none.  So why not?
+    /// performance impact is none.  So why not?  See SetDelimiters().
     /// 
     /// Comment Lines
     /// There is no mention of comment lines in the psuedo-official documents about CSV. But there's
-    /// plenty of talk about people using comment lines.  So, it seems the people want
-    /// this feature.  So, why not?
+    /// plenty of talk about people using comment lines.  So, it seems the people want this feature.
+    /// So, why not?  I was able to add it with very minimal performance impact.  See 
+    /// SetCommentChars().
     /// 
-    /// Trim Whitespace [TODO]
+    /// Trim Whitespace [TODO: implemented this]
     /// RFC4180 says that whitespace should not be trimmed.  But, consider the quoted value.  Does
     /// that mean the whitespace before and after the quotes should be included?  That's nonesense!
     /// I'd say RFC4180 is incomplete if not wrong WRT quoted values.  But, should the whitespace be
@@ -42,40 +44,6 @@ namespace CsvReader
     public sealed class CsvReader
     {
         #region Helper Classes
-
-        internal sealed class Context
-        {
-            public Context(int line, int column)
-            {
-                Line = line;
-                Column = column;
-            }
-
-            public Context(Buffer buffer, int? column=null)
-            {
-                Line = buffer.LineNumber;
-                Column = column ?? buffer.LinePos;
-            }
-
-            public int Line { get; }
-            public int Column { get; }
-            public string Message(string message)
-            {
-                return $"{message} at line {Line + 1} column {Column + 1}.";
-            }
-        }
-
-        public abstract class CsvException : Exception
-        {
-            internal CsvException(string message, Context context) : 
-                base(context.Message(message))
-            {
-                Line = context.Line;
-                Column = context.Column;
-            }
-            public int Line { get; }
-            public int Column { get; }
-        }
 
         internal sealed class QuoteInUnquotedValueException : CsvException
         {
@@ -170,6 +138,11 @@ namespace CsvReader
             {
                 return _line.Substring(pos, LinePos - pos);
             }
+
+            public CsvException.Context Context(int? column = null)
+            {
+                return new CsvException.Context(LineNumber, column ?? LinePos);
+            }
         }
 
         #endregion
@@ -192,13 +165,13 @@ namespace CsvReader
             value = value.TrimEnd();
             int quotePos = value.IndexOf(Quote);
             if (quotePos != -1)
-                throw new QuoteInUnquotedValueException(new Context(buffer, quotePos));
+                throw new QuoteInUnquotedValueException(buffer.Context(quotePos));
             return value;
         }
 
         private string ConsumeQuotedValue(Buffer buffer)
         {
-            var startContext = new Context(buffer.LineNumber, buffer.LinePos);
+            var startContext = new CsvException.Context(buffer.LineNumber, buffer.LinePos);
             var startPos = buffer.LinePos;
             buffer.ConsumeChar(); // start quote
             bool done = false;
@@ -229,7 +202,7 @@ namespace CsvReader
                         // check for text between end quote and delimiter
                         ConsumeWhitespace(buffer);
                         if (!buffer.EndOfLine && !_delimiters.Contains(buffer.Char))
-                            throw new TextAfterQuotedValueException(new Context(buffer));
+                            throw new TextAfterQuotedValueException(buffer.Context());
 
                         done = true;
                     }
@@ -317,5 +290,33 @@ namespace CsvReader
                 _buffer.ConsumeChar();
             }
         }
+    }
+
+    public abstract class CsvException : Exception
+    {
+        internal sealed class Context
+        {
+            public Context(int line, int column)
+            {
+                Line = line;
+                Column = column;
+            }
+
+            public int Line { get; }
+            public int Column { get; }
+            public string Message(string message)
+            {
+                return $"{message} at line {Line + 1} column {Column + 1}.";
+            }
+        }
+
+        internal CsvException(string message, Context context) :
+            base(context.Message(message))
+        {
+            Line = context.Line;
+            Column = context.Column;
+        }
+        public int Line { get; }
+        public int Column { get; }
     }
 }
