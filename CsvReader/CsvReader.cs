@@ -11,6 +11,11 @@ using System.IO;
 /// https://tools.ietf.org/html/rfc4180
 /// http://www.computerhope.com/issues/ch001356.htm
 /// </remarks>
+/// Ideas:
+///     custom delimiters ... because it's easy
+///     comment lines ... because people seem to want this
+///     line and column info in exception ... because it's useful
+///     trim whitespace ... because people may want to control this behavior
 namespace CsvReader
 {
     public sealed class CsvReader
@@ -54,7 +59,7 @@ namespace CsvReader
 
             public int LinePos { get; private set; }
 
-            public bool EndOfLine => LinePos >= _line.Length;//_line != null &&
+            public bool EndOfLine => LinePos >= _line.Length;
 
             public bool EndOfData { get; private set; }
 
@@ -73,7 +78,7 @@ namespace CsvReader
                 return _line.Substring(pos, LinePos - pos);
             }
 
-            public string PositionMessage(string message, int? linePos=null)
+            public string ContextMessage(string message, int? linePos=null)
             {
                 linePos = linePos ?? LinePos;
                 return $"{message} at line {LineNumber} column {linePos}.";
@@ -81,6 +86,7 @@ namespace CsvReader
         }
 
         private readonly Buffer _buffer;
+        private readonly HashSet<char> _delimiters = new HashSet<char> { ',' };
 
         public CsvReader(TextReader textReader)
         {
@@ -100,13 +106,13 @@ namespace CsvReader
         private string ConsumeUnquotedValue(Buffer buffer)
         {
             var startPos = buffer.LinePos;
-            buffer.ConsumeWhile(c => c != ',');
+            buffer.ConsumeWhile(c => !_delimiters.Contains(c));
             string value = buffer.SubstringConsumed(startPos);
             value = value.TrimEnd();
             int quotePos = value.IndexOf('"');
             if (quotePos != -1)
                 throw new QuoteInUnquotedValueException(
-                    buffer.PositionMessage("Unquoted value contains quote", quotePos));
+                    buffer.ContextMessage("Unquoted value contains quote", quotePos));
             return value;
         }
 
@@ -135,9 +141,9 @@ namespace CsvReader
                     else
                     {
                         ConsumeWhitespace(buffer);
-                        if (!buffer.EndOfLine && buffer.Char != ',')
+                        if (!buffer.EndOfLine && !_delimiters.Contains(buffer.Char))
                             throw new TextAfterQuotedValueException(
-                                buffer.PositionMessage("Text after quoted value"));
+                                buffer.ContextMessage("Text after quoted value"));
                         done = true;
                     }
                 }
