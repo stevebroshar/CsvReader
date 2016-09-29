@@ -2,22 +2,45 @@
 using System.Collections.Generic;
 using System.IO;
 
-/// <summary>
-/// A CSV parser.
-/// </summary>
-/// <remarks>
-/// Some documents that describe the CSV format.  No document is definintive as there is no standard.
-/// https://en.wikipedia.org/wiki/Comma-separated_values
-/// https://tools.ietf.org/html/rfc4180
-/// http://www.computerhope.com/issues/ch001356.htm
-/// </remarks>
-/// Ideas:
-///     custom delimiters ... because it's easy
-///     comment lines ... because people seem to want this
-///     line and column info in exception ... because it's useful
-///     trim whitespace ... because people may want to control this behavior
 namespace CsvReader
 {
+    /// <summary>
+    /// A CSV reader.  There are so many CSV readers in the world and none of them seem to work right.
+    /// Many try to do too much making them too specialized and therefore not useful in general 
+    /// contexts.  Some are overly complicated to use.  Some run slow.  As an example, Microsoft's 
+    /// TextFieldParser is pretty good, but has some fatal flaws.  It ignores blank lines in a quoted
+    /// value.  And, it strips whitespace from quoted values.
+    /// 
+    /// This implementation is intended to be fast and correct.  Of course, since there is no 
+    /// standard for CSV, correct is somewhat subjective.  This is written to conform to the 
+    /// obvious aspects of CSV and supports switches to control some of the more contentious 
+    /// behaviors ... such as:
+    /// 
+    /// Custom Delimiters [TODO]
+    /// Why would someone want to use a delimiter other than comma?  Well, tab is somewhat common.
+    /// And, the implementation is easy and the performance impact is none.  So why not?
+    /// 
+    /// Comment Lines [TODO]
+    /// There is no mention of comment lines in the psuedo-official documents about CSV. But there's
+    /// plenty of talk about people using comment lines.  So, it seems the people want
+    /// this feature.  So, why not?
+    /// 
+    /// Trim Whitespace [TODO]
+    /// RFC4180 says that whitespace should not be trimmed.  But, consider the quoted value.  Does
+    /// that mean the whitespace before and after the quotes should be included?  That's nonesense!
+    /// So, RFC4180 is clearly wrong/incomplete WRT quoted values.  But, should the whitespace be
+    /// trimmed for unquoted values?  Hmm.  Who knows?  Let's make it optional.  I'm picking trimmed
+    /// as default since it makes sense to me. Sorry RFC4180.
+    /// 
+    /// Ideas:
+    ///     line and column info in exception ... because it's useful
+    /// </summary>
+    /// <remarks>
+    /// Some documents that describe the CSV format:
+    /// https://en.wikipedia.org/wiki/Comma-separated_values
+    /// https://tools.ietf.org/html/rfc4180
+    /// http://www.computerhope.com/issues/ch001356.htm
+    /// </remarks>
     public sealed class CsvReader
     {
         internal abstract class CsvException : Exception
