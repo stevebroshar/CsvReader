@@ -197,8 +197,8 @@ namespace CsvReader
         }
 
         private readonly Buffer _buffer;
-        public HashSet<char> _delimiters = new HashSet<char> { ',' };
-        public HashSet<char> _commentChars = null;
+        private HashSet<char> _delimiters = new HashSet<char> { ',' };
+        private HashSet<char> _commentChars;
 
         public void SetDelimiters(params char[] delimiters)
         {
