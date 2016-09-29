@@ -39,6 +39,14 @@ namespace CsvReaderUnitTest
         }
 
         [TestMethod]
+        public void ReadRecord_IgnoresMultipleWhitespaceLines()
+        {
+            var reader = CsvReader.CsvReader.Parse($"a{Environment.NewLine} \t{Environment.NewLine} \t{Environment.NewLine}b");
+            Assert.AreEqual("a", reader.ReadRecord().First());
+            Assert.AreEqual("b", reader.ReadRecord().First());
+        }
+
+        [TestMethod]
         public void ReadRecord_PreservesWhitespaceWithinValues()
         {
             var values = CsvReader.CsvReader.Parse("a b\tc").ReadRecord();

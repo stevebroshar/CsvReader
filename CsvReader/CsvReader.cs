@@ -62,15 +62,21 @@ namespace CsvReader
 
             public void ConsumeChar() { ++LinePos; }
 
-            internal void ConsumeWhile(Func<char, bool> condition)
+            public void ConsumeWhile(Func<char, bool> condition)
             {
                 while (!EndOfLine && condition(Char))
                     ConsumeChar();
             }
 
-            internal string SubstringConsumed(int pos)
+            public string SubstringConsumed(int pos)
             {
                 return _line.Substring(pos, LinePos - pos);
+            }
+
+            public string PositionMessage(string message, int? pos=null)
+            {
+                pos = pos ?? LinePos;
+                return $"{message} at position {pos}.";
             }
         }
 
@@ -86,15 +92,55 @@ namespace CsvReader
             return new CsvReader(new StringReader(text));
         }
 
-        private string PositionContext(string message, int pos)
-        {
-            return $"{message} at position {pos}.";
-        }
-
         private void ConsumeWhitespace(Buffer buffer)
         {
-            while (char.IsWhiteSpace(buffer.Char))
-                buffer.ConsumeChar();
+            buffer.ConsumeWhile(c => char.IsWhiteSpace(c));
+        }
+
+        private string ConsumeUnquotedValue(Buffer buffer)
+        {
+            var startPos = buffer.LinePos;
+            buffer.ConsumeWhile(c => c != ',');
+            string value = buffer.SubstringConsumed(startPos);
+            if (!buffer.EndOfLine)
+                buffer.ConsumeChar(); // ','
+            value = value.TrimEnd();
+            int quotePos = value.IndexOf('"');
+            if (quotePos != -1)
+                throw new QuoteInUnquotedValueException(buffer.PositionMessage("Unquoted value contains quote", quotePos));
+            return value;
+        }
+
+        private string ConsumeQuotedValue(Buffer buffer)
+        {
+            var startPos = buffer.LinePos;
+            buffer.ConsumeChar();
+            bool done = false;
+            while (!done)
+            {
+                buffer.ConsumeWhile(c => c != '"');
+                if (buffer.EndOfLine)
+                {
+                    throw new Exception("need next line!");
+                }
+                else
+                {
+                    buffer.ConsumeChar();
+                    if (!buffer.EndOfLine && buffer.Char == '"')
+                        buffer.ConsumeChar(); // jump over doubled quote; and continue reading string
+                    else
+                    {
+                        while (!buffer.EndOfLine)
+                            if (!char.IsWhiteSpace(buffer.Char))
+                                throw new TextAfterQuotedValueException(buffer.PositionMessage("Text after quoted value"));
+                        done = true;
+                    }
+                }
+            }
+            var value = buffer.SubstringConsumed(startPos);
+            value = value.Substring(1, value.Length - 2);
+            value = value.Replace(@"""""", @"""");
+            return value;
         }
 
         private string ConsumeValue(Buffer buffer)
@@ -102,50 +148,10 @@ namespace CsvReader
             ConsumeWhitespace(buffer);
             //if (pos >= text.Length)
             //return "";
-            var startPos = buffer.LinePos;
-
             if (buffer.Char == '"')
-            {
-                buffer.ConsumeChar();
-                bool done = false;
-                while (!done)
-                {
-                    buffer.ConsumeWhile(c => c != '"');
-                    if (buffer.EndOfLine)
-                    {
-                        throw new Exception("need next line!");
-                    }
-                    else
-                    {
-                        buffer.ConsumeChar();
-                        if (!buffer.EndOfLine && buffer.Char == '"')
-                            buffer.ConsumeChar(); // jump over doubled quote; and continue reading string
-                        else
-                        {
-                            while (!buffer.EndOfLine)
-                                if (!char.IsWhiteSpace(buffer.Char))
-                                    throw new TextAfterQuotedValueException(PositionContext("Text after quoted value", buffer.LinePos));
-                            done = true;
-                        }
-                    }
-                }
-                var value = buffer.SubstringConsumed(startPos);
-                value = value.Substring(1, value.Length - 2);
-                value = value.Replace(@"""""", @"""");
-                return value;
-            }
+                return ConsumeQuotedValue(buffer);
             else
-            {
-                buffer.ConsumeWhile(c => c != ',');
-                string value = buffer.SubstringConsumed(startPos);
-                if (!buffer.EndOfLine)
-                    buffer.ConsumeChar(); // ','
-                value = value.TrimEnd();
-                int quotePos = value.IndexOf('"');
-                if (quotePos != -1)
-                    throw new QuoteInUnquotedValueException(PositionContext("Unquoted value contains quote", quotePos));
-                return value;
-            }
+                return ConsumeUnquotedValue(buffer);
         }
 
         /// <summary>
@@ -154,15 +160,22 @@ namespace CsvReader
         public IEnumerable<string> ReadRecord()
         {
             _buffer.NextLine();
-            while (!_buffer.EndOfData && _buffer.EndOfLine)
-                _buffer.NextLine();
             if (_buffer.EndOfData)
                 return null;
+
+            // consume whitespace lines
+            ConsumeWhitespace(_buffer);
+            while (!_buffer.EndOfData && _buffer.EndOfLine)
+            {
+                _buffer.NextLine();
+                ConsumeWhitespace(_buffer);
+            }
+            if (_buffer.EndOfData)
+                return null;
+
             var values = new List<string>();
             while (!_buffer.EndOfLine)
-            {
                 values.Add(ConsumeValue(_buffer));
-            }
             return values;
         }
     }
