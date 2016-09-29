@@ -31,9 +31,6 @@ namespace CsvReader
     /// So, RFC4180 is clearly wrong/incomplete WRT quoted values.  But, should the whitespace be
     /// trimmed for unquoted values?  Hmm.  Who knows?  Let's make it optional.  I'm picking trimmed
     /// as default since it makes sense to me. Sorry RFC4180.
-    /// 
-    /// Ideas:
-    ///     line and column info in exception ... because it's useful
     /// </summary>
     /// <remarks>
     /// Some documents that describe the CSV format:
@@ -43,19 +40,43 @@ namespace CsvReader
     /// </remarks>
     public sealed class CsvReader
     {
-        internal abstract class CsvException : Exception
+        internal sealed class Context
         {
-            public CsvException(string message) : base(message) { }
+            public Context(Buffer buffer, int? column=null)
+            {
+                Line = buffer.LineNumber;
+                Column = column ?? buffer.LinePos;
+            }
+            public int Line { get; }
+            public int Column { get; }
+            public string Message(string message)
+            {
+                return $"{message} at line {Line} column {Column}.";
+            }
+        }
+
+        public abstract class CsvException : Exception
+        {
+            internal CsvException(string message, Context context) : 
+                base(context.Message(message))
+            {
+                Line = context.Line;
+                Column = context.Column;
+            }
+            public int Line { get; }
+            public int Column { get; }
         }
 
         internal sealed class QuoteInUnquotedValueException : CsvException
         {
-            public QuoteInUnquotedValueException(string message) : base(message) { }
+            public QuoteInUnquotedValueException(string message, Context context) : 
+                base(message, context) { }
         }
 
         internal sealed class TextAfterQuotedValueException : CsvException
         {
-            public TextAfterQuotedValueException(string message) : base(message) { }
+            public TextAfterQuotedValueException(string message, Context context) : 
+                base(message, context) { }
         }
 
         internal sealed class Buffer
@@ -135,7 +156,7 @@ namespace CsvReader
             int quotePos = value.IndexOf('"');
             if (quotePos != -1)
                 throw new QuoteInUnquotedValueException(
-                    buffer.ContextMessage("Unquoted value contains quote", quotePos));
+                    "Unquoted value contains quote", new Context(buffer, quotePos));
             return value;
         }
 
@@ -166,7 +187,7 @@ namespace CsvReader
                         ConsumeWhitespace(buffer);
                         if (!buffer.EndOfLine && !_delimiters.Contains(buffer.Char))
                             throw new TextAfterQuotedValueException(
-                                buffer.ContextMessage("Text after quoted value"));
+                                "Text after quoted value", new Context(buffer));
                         done = true;
                     }
                 }
