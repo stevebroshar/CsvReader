@@ -66,7 +66,21 @@ namespace CsvReaderUnitTest
         #endregion
 
         #region Quoted Values
-        
+
+        [TestMethod]
+        public void ReadRecord_ReturnsQuotedValuesDelimitedByComma()
+        {
+            var values = CsvReader.CsvReader.Parse(@"""a"",""b"",""c""").ReadRecord();
+            CollectionAssert.AreEqual(new[] { "a", "b", "c" }, values.ToArray());
+        }
+
+        [TestMethod]
+        public void ReadRecord_ReturnsQuotedAndUnquotedValues()
+        {
+            var values = CsvReader.CsvReader.Parse(@"a,""b"",c,""d""").ReadRecord();
+            CollectionAssert.AreEqual(new[] { "a", "b", "c", "d" }, values.ToArray());
+        }
+
         [TestMethod]
         public void ReadRecord_IncludesAllWhitespaceInQuotedValue()
         {
@@ -122,15 +136,26 @@ namespace CsvReaderUnitTest
         public void ReadRecord_Propagates_ForTextAfterQuotedValue()
         {
             ExceptionAssert.Propagates<CsvReader.CsvReader.TextAfterQuotedValueException>(
+                () => CsvReader.CsvReader.Parse(@"""a""x,b").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.CsvReader.TextAfterQuotedValueException>(
+                () => CsvReader.CsvReader.Parse(@"""a"" x,b").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.CsvReader.TextAfterQuotedValueException>(
                 () => CsvReader.CsvReader.Parse(@"""a""x").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.CsvReader.TextAfterQuotedValueException>(
+                () => CsvReader.CsvReader.Parse(@"""a"" x").ReadRecord());
         }
 
         #endregion
 
         #region Records & Lines
 
+        /// <summary>
+        /// Some CSV docs say that each record should have the same number of values.
+        /// But they don't say what to do if they don't.  In practice, I've found that
+        /// it's best to be forgiving so that the caller has the fexability can deal with it.
+        /// </summary>
         [TestMethod]
-        public void ReadRecord_ReturnsAllValuesOfRecord_WhenDiffersFromRecordToRecord()
+        public void ReadRecord_ReturnsAllValuesOfRecord_WhenCountDiffersFromRecordToRecord()
         {
             var text = $"a,b,c{Environment.NewLine}d{Environment.NewLine}e,f";
             var reader = CsvReader.CsvReader.Parse(text);

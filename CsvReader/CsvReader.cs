@@ -73,10 +73,10 @@ namespace CsvReader
                 return _line.Substring(pos, LinePos - pos);
             }
 
-            public string PositionMessage(string message, int? pos=null)
+            public string PositionMessage(string message, int? linePos=null)
             {
-                pos = pos ?? LinePos;
-                return $"{message} at position {pos}.";
+                linePos = linePos ?? LinePos;
+                return $"{message} at line {LineNumber} column {linePos}.";
             }
         }
 
@@ -102,12 +102,11 @@ namespace CsvReader
             var startPos = buffer.LinePos;
             buffer.ConsumeWhile(c => c != ',');
             string value = buffer.SubstringConsumed(startPos);
-            //if (!buffer.EndOfLine)
-            //    buffer.ConsumeChar(); // ','
             value = value.TrimEnd();
             int quotePos = value.IndexOf('"');
             if (quotePos != -1)
-                throw new QuoteInUnquotedValueException(buffer.PositionMessage("Unquoted value contains quote", quotePos));
+                throw new QuoteInUnquotedValueException(
+                    buffer.PositionMessage("Unquoted value contains quote", quotePos));
             return value;
         }
 
@@ -130,12 +129,15 @@ namespace CsvReader
                 {
                     buffer.ConsumeChar(); // end or escape '"'
                     if (!buffer.EndOfLine && buffer.Char == '"')
+                    {
                         buffer.ConsumeChar(); // escaped '"'
+                    }
                     else
                     {
-                        while (!buffer.EndOfLine)
-                            if (!char.IsWhiteSpace(buffer.Char))
-                                throw new TextAfterQuotedValueException(buffer.PositionMessage("Text after quoted value"));
+                        ConsumeWhitespace(buffer);
+                        if (!buffer.EndOfLine && buffer.Char != ',')
+                            throw new TextAfterQuotedValueException(
+                                buffer.PositionMessage("Text after quoted value"));
                         done = true;
                     }
                 }
