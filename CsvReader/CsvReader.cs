@@ -28,7 +28,7 @@ namespace CsvReader
     /// Trim Whitespace [TODO]
     /// RFC4180 says that whitespace should not be trimmed.  But, consider the quoted value.  Does
     /// that mean the whitespace before and after the quotes should be included?  That's nonesense!
-    /// So, RFC4180 is clearly wrong/incomplete WRT quoted values.  But, should the whitespace be
+    /// I'd say RFC4180 is incomplete if not wrong WRT quoted values.  But, should the whitespace be
     /// trimmed for unquoted values?  Hmm.  Who knows?  Let's make it optional.  I'm picking trimmed
     /// as default since it makes sense to me. Sorry RFC4180.
     /// </summary>
