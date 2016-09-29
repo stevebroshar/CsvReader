@@ -116,12 +116,15 @@ namespace CsvReader
             var startPos = buffer.LinePos;
             buffer.ConsumeChar();
             bool done = false;
+            string value = "";
             while (!done)
             {
                 buffer.ConsumeWhile(c => c != '"');
                 if (buffer.EndOfLine)
                 {
-                    throw new Exception("need next line!");
+                    value += buffer.SubstringConsumed(startPos) + Environment.NewLine;
+                    buffer.NextLine();
+                    startPos = 0;
                 }
                 else
                 {
@@ -137,7 +140,7 @@ namespace CsvReader
                     }
                 }
             }
-            var value = buffer.SubstringConsumed(startPos);
+            value += buffer.SubstringConsumed(startPos);
             value = value.Substring(1, value.Length - 2);
             value = value.Replace(@"""""", @"""");
             return value;
