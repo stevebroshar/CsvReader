@@ -42,16 +42,23 @@ namespace CsvReader
     {
         internal sealed class Context
         {
+            public Context(int line, int column)
+            {
+                Line = line;
+                Column = column;
+            }
+
             public Context(Buffer buffer, int? column=null)
             {
                 Line = buffer.LineNumber;
                 Column = column ?? buffer.LinePos;
             }
+
             public int Line { get; }
             public int Column { get; }
             public string Message(string message)
             {
-                return $"{message} at line {Line} column {Column}.";
+                return $"{message} at line {Line + 1} column {Column + 1}.";
             }
         }
 
@@ -69,14 +76,19 @@ namespace CsvReader
 
         internal sealed class QuoteInUnquotedValueException : CsvException
         {
-            public QuoteInUnquotedValueException(string message, Context context) : 
-                base(message, context) { }
+            public QuoteInUnquotedValueException(Context context) : 
+                base("Unquoted value contains quote", context) { }
         }
 
         internal sealed class TextAfterQuotedValueException : CsvException
         {
-            public TextAfterQuotedValueException(string message, Context context) : 
-                base(message, context) { }
+            public TextAfterQuotedValueException(Context context) : 
+                base("Text after quoted value", context) { }
+        }
+        internal sealed class QuoteStartWithoutEndException : CsvException
+        {
+            public QuoteStartWithoutEndException(Context context) :
+                base("Unmatched quote at start of value", context) { }
         }
 
         internal sealed class Buffer
@@ -99,7 +111,7 @@ namespace CsvReader
                     ++LineNumber;
             }
 
-            public int LineNumber { get; private set; }
+            public int LineNumber { get; private set; } = -1;
 
             public int LinePos { get; private set; }
 
@@ -131,7 +143,7 @@ namespace CsvReader
 
         private void ConsumeWhitespace(Buffer buffer)
         {
-            buffer.ConsumeWhile(c => char.IsWhiteSpace(c));
+            buffer.ConsumeWhile(char.IsWhiteSpace);
         }
 
         private string ConsumeUnquotedValue(Buffer buffer)
@@ -142,13 +154,13 @@ namespace CsvReader
             value = value.TrimEnd();
             int quotePos = value.IndexOf('"');
             if (quotePos != -1)
-                throw new QuoteInUnquotedValueException(
-                    "Unquoted value contains quote", new Context(buffer, quotePos));
+                throw new QuoteInUnquotedValueException(new Context(buffer, quotePos));
             return value;
         }
 
         private string ConsumeQuotedValue(Buffer buffer)
         {
+            var startContext = new Context(buffer.LineNumber, buffer.LinePos);
             var startPos = buffer.LinePos;
             buffer.ConsumeChar(); // start '"'
             bool done = false;
@@ -160,6 +172,8 @@ namespace CsvReader
                 {
                     value += buffer.SubstringConsumed(startPos) + Environment.NewLine;
                     buffer.NextLine();
+                    if (buffer.EndOfData)
+                        throw new QuoteStartWithoutEndException(startContext);
                     startPos = 0;
                 }
                 else
@@ -173,8 +187,7 @@ namespace CsvReader
                     {
                         ConsumeWhitespace(buffer);
                         if (!buffer.EndOfLine && !_delimiters.Contains(buffer.Char))
-                            throw new TextAfterQuotedValueException(
-                                "Text after quoted value", new Context(buffer));
+                            throw new TextAfterQuotedValueException(new Context(buffer));
                         done = true;
                     }
                 }
@@ -200,11 +213,18 @@ namespace CsvReader
         private HashSet<char> _delimiters = new HashSet<char> { ',' };
         private HashSet<char> _commentChars;
 
+        /// <summary>
+        /// Sets the chars that delimit values.  Default is [','].
+        /// </summary>
         public void SetDelimiters(params char[] delimiters)
         {
             _delimiters = new HashSet<char>(delimiters);
         }
 
+        /// <summary>
+        /// Sets the chars that specify a comment line -- when in the first column.
+        /// Default is none -- no comment lines.
+        /// </summary>
         public void SetCommentChars(params char[] chars)
         {
             _commentChars = new HashSet<char>(chars);

@@ -127,6 +127,20 @@ namespace CsvReaderUnitTest
         }
 
         [TestMethod]
+        public void ReadRecord_Propagates_ForStartQuoteWitNoMatchingEnd_InLastLine()
+        {
+            ExceptionAssert.Propagates<CsvReader.CsvReader.QuoteStartWithoutEndException>(
+                () => CsvReader.CsvReader.Parse(@"""a").ReadRecord());
+        }
+
+        [TestMethod]
+        public void ReadRecord_Propagates_ForStartQuoteWitNoMatchingEnd_InNonLastLine()
+        {
+            ExceptionAssert.Propagates<CsvReader.CsvReader.QuoteStartWithoutEndException>(
+                () => CsvReader.CsvReader.Parse($@"""a{Environment.NewLine}b").ReadRecord());
+        }
+
+        [TestMethod]
         public void ReadRecord_TreatsDoubledQuotesAsSingleInsideQuotedValue()
         {
             var values = CsvReader.CsvReader.Parse(@"""""""a""""b""""""").ReadRecord();
