@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.IO;
 using System.Linq;
 
 namespace CsvReaderUnitTest
@@ -223,6 +224,14 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_IgnoresLineStartingWithCommentChar()
         {
+            var reader = CsvReader.CsvReader.Parse("#comment");
+            reader.SetCommentChars('#', '$');
+            Assert.IsNull(reader.ReadRecord());
+        }
+
+        [TestMethod]
+        public void ReadRecord_IgnoresLinesStartingWithCommentChar()
+        {
             var reader = CsvReader.CsvReader.Parse($"a{Environment.NewLine}#comment{Environment.NewLine}b{Environment.NewLine}$comment{Environment.NewLine}c");
             reader.SetCommentChars('#', '$');
             Assert.AreEqual("a", reader.ReadRecord().First());
@@ -231,5 +240,21 @@ namespace CsvReaderUnitTest
         }
 
         #endregion
+
+        [TestClass]
+        public class BufferUnitTest
+        {
+            [TestMethod]
+            public void EndOfData_IsFalseBeforeFirstRead()
+            {
+                Assert.IsFalse(new CsvReader.CsvReader.Buffer(new StringReader("")).EndOfData);
+            }
+
+            [TestMethod]
+            public void EndOfLine_IsTrueBeforeFirstRead()
+            {
+                Assert.IsTrue(new CsvReader.CsvReader.Buffer(new StringReader("")).EndOfLine);
+            }
+        }
     }
 }

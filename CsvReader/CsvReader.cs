@@ -103,7 +103,7 @@ namespace CsvReader
 
             public int LinePos { get; private set; }
 
-            public bool EndOfLine => LinePos >= _line.Length;
+            public bool EndOfLine => _line == null || LinePos >= _line.Length;
 
             public bool EndOfData { get; private set; }
 
@@ -244,7 +244,7 @@ namespace CsvReader
             {
                 _buffer.NextLine();
                 if (_commentChars != null)
-                    if (!_buffer.EndOfLine & _commentChars.Contains(_buffer.Char))
+                    if (!_buffer.EndOfLine && _commentChars.Contains(_buffer.Char))
                         _buffer.ConsumeWhile(c => true);
                 ConsumeWhitespace(_buffer);
             }
