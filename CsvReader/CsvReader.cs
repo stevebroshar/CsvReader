@@ -17,8 +17,9 @@ namespace CsvReader
     /// behaviors ... such as:
     /// 
     /// Custom Delimiters
-    /// Why would someone want to use a delimiter other than comma?  Well, tab is somewhat common.
-    /// And, the implementation is easy and the performance impact is none.  So why not?
+    /// Why would someone want to use a delimiter other than comma ... for something called "COMMA
+    /// separated values"?  Well, tab is somewhat common.  And, the implementation is easy and the 
+    /// performance impact is none.  So why not?
     /// 
     /// Comment Lines
     /// There is no mention of comment lines in the psuedo-official documents about CSV. But there's
@@ -101,6 +102,9 @@ namespace CsvReader
                 _textReader = textReader;
             }
 
+            /// <summary>
+            /// Read the next line.
+            /// </summary>
             public void NextLine()
             {
                 LinePos = 0;
@@ -111,33 +115,57 @@ namespace CsvReader
                     ++LineNumber;
             }
 
+            /// <summary>
+            /// Current line index.
+            /// </summary>
             public int LineNumber { get; private set; } = -1;
 
+            /// <summary>
+            /// Current column of the current line.
+            /// </summary>
             public int LinePos { get; private set; }
 
+            /// <summary>
+            /// Whether LinePos is past the end of the current line.
+            /// </summary>
             public bool EndOfLine => _line == null || LinePos >= _line.Length;
 
+            /// <summary>
+            /// Whether the last line has been read.
+            /// </summary>
             public bool EndOfData { get; private set; }
 
+            /// <summary>
+            /// Returns the char at LinePos.
+            /// </summary>
             public char Char => _line[LinePos];
 
-            public void ConsumeChar() { ++LinePos; }
+            /// <summary>
+            /// Increments LinePos by one if not at end-of-line.
+            /// </summary>
+            public void ConsumeChar() { if (!EndOfLine) ++LinePos; }
 
+            /// <summary>
+            /// Increments LinePos until until the condition (which is passed the current char) 
+            /// is false or end-of-line.
+            /// </summary>
+            /// <remarks>
+            /// This could be simplified by using ConsumeChar(), but that would add extra checking.
+            /// </remarks>
             public void ConsumeWhile(Func<char, bool> condition)
             {
-                while (!EndOfLine && condition(Char))
-                    ConsumeChar();
+                if (_line != null)
+                    while (LinePos < _line.Length && condition(Char))
+                        ++LinePos;
             }
 
+            /// <summary>
+            /// Returns the substring of the current line from pos up to but not including the char
+            /// as LinePos.
+            /// </summary>
             public string SubstringConsumed(int pos)
             {
                 return _line.Substring(pos, LinePos - pos);
-            }
-
-            public string ContextMessage(string message, int? linePos=null)
-            {
-                linePos = linePos ?? LinePos;
-                return $"{message} at line {LineNumber} column {linePos}.";
             }
         }
 
@@ -170,6 +198,7 @@ namespace CsvReader
                 buffer.ConsumeWhile(c => c != '"');
                 if (buffer.EndOfLine)
                 {
+                    // value spans lines
                     value += buffer.SubstringConsumed(startPos) + Environment.NewLine;
                     buffer.NextLine();
                     if (buffer.EndOfData)
@@ -185,16 +214,19 @@ namespace CsvReader
                     }
                     else
                     {
+                        value += buffer.SubstringConsumed(startPos); // last part thru end quote
+
+                        // check for text between end quote and delimiter
                         ConsumeWhitespace(buffer);
                         if (!buffer.EndOfLine && !_delimiters.Contains(buffer.Char))
                             throw new TextAfterQuotedValueException(new Context(buffer));
+
                         done = true;
                     }
                 }
             }
-            value += buffer.SubstringConsumed(startPos);
-            value = value.Substring(1, value.Length - 2);
-            value = value.Replace(@"""""", @"""");
+            value = value.Substring(1, value.Length - 2); // remove enclosing quotes
+            value = value.Replace(@"""""", @""""); // replace doubled quotes with single
             return value;
         }
 
@@ -205,8 +237,7 @@ namespace CsvReader
                 return "";
             if (buffer.Char == '"')
                 return ConsumeQuotedValue(buffer);
-            else
-                return ConsumeUnquotedValue(buffer);
+            return ConsumeUnquotedValue(buffer);
         }
 
         private readonly Buffer _buffer;

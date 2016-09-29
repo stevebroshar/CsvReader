@@ -97,7 +97,7 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_ExcludesWhitespaceOutsideOfQuotedValue()
         {
-            var values = CsvReader.CsvReader.Parse(@" ""ab""\t").ReadRecord();
+            var values = CsvReader.CsvReader.Parse(" \"ab\"\t").ReadRecord();
             Assert.AreEqual("ab", values.First());
         }
 
@@ -259,15 +259,159 @@ namespace CsvReaderUnitTest
         public class BufferUnitTest
         {
             [TestMethod]
+            public void LineNumber_IsMinusOneBeforeFirstRead()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                Assert.AreEqual(-1, buffer.LineNumber);
+            }
+
+            [TestMethod]
+            public void NextLine_IncrementsLineNumber()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader($"a{Environment.NewLine}b{Environment.NewLine}c"));
+                buffer.NextLine();
+                Assert.AreEqual(0, buffer.LineNumber);
+                buffer.NextLine();
+                Assert.AreEqual(1, buffer.LineNumber);
+            }
+
+            [TestMethod]
+            public void NextLine_SetsLinePosToZero()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader($"a{Environment.NewLine}b{Environment.NewLine}c"));
+                buffer.NextLine();
+                buffer.ConsumeChar();
+                Assert.IsTrue(buffer.LinePos != 0);
+                buffer.NextLine();
+                Assert.AreEqual(0, buffer.LinePos);
+            }
+
+            [TestMethod]
+            public void Char_ReturnsCharAtLinePos()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("abc"));
+                buffer.NextLine();
+                Assert.AreEqual('a', buffer.Char);
+                buffer.ConsumeChar();
+                Assert.AreEqual('b', buffer.Char);
+            }
+
+            /// Maybe Char should not propagate when EOL -- return null instead?  Or maybe let
+            /// it propagate, but change to a method since a property getter is not supposed to 
+            /// propagate.
+            [TestMethod]
+            public void Char_Propagates_AtEndOfLine()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                buffer.NextLine();
+                Assert.IsTrue(buffer.EndOfLine);
+                ExceptionAssert.Propagates<NullReferenceException>(() =>
+                {
+                    var bufferChar = buffer.Char;
+                });
+            }
+
+            [TestMethod]
+            public void ConsumeChar_IncrementsLinePos()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("abc"));
+                buffer.NextLine();
+                var origPos = buffer.LinePos;
+                buffer.ConsumeChar();
+                Assert.AreEqual(origPos + 1, buffer.LinePos);
+            }
+
+            [TestMethod]
+            public void ConsumeChar_DoesNotIncrementLinePosWhenAtEndOfLine()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                buffer.NextLine();
+                Assert.IsTrue(buffer.EndOfLine);
+                var origPos = buffer.LinePos;
+                buffer.ConsumeChar();
+                Assert.AreEqual(origPos, buffer.LinePos);
+            }
+
+            [TestMethod]
             public void EndOfData_IsFalseBeforeFirstRead()
             {
                 Assert.IsFalse(new CsvReader.CsvReader.Buffer(new StringReader("")).EndOfData);
             }
 
             [TestMethod]
+            public void EndOfData_IsTrueAfterReadLastLine()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                buffer.NextLine();
+                Assert.IsTrue(buffer.EndOfData);
+            }
+
+            [TestMethod]
             public void EndOfLine_IsTrueBeforeFirstRead()
             {
                 Assert.IsTrue(new CsvReader.CsvReader.Buffer(new StringReader("")).EndOfLine);
+            }
+
+            [TestMethod]
+            public void EndOfLine_IsTrueAfterReadEmptyLine()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                buffer.NextLine();
+                Assert.IsTrue(buffer.EndOfLine);
+            }
+
+            [TestMethod]
+            public void EndOfLine_IsFalseAfterReadNonEmptyLine()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("x"));
+                buffer.NextLine();
+                Assert.IsFalse(buffer.EndOfLine);
+            }
+
+            [TestMethod]
+            public void EndOfLine_IsFalseAfterConsumeLastCharOfLine()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("x"));
+                buffer.NextLine();
+                buffer.ConsumeChar();
+                Assert.IsTrue(buffer.EndOfLine);
+            }
+
+            [TestMethod]
+            public void ConsumeWhile_DoesNotAdvancePositionIfConditionTrue()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("x"));
+                buffer.NextLine();
+                buffer.ConsumeWhile(c => true);
+                var origPos = buffer.LinePos;
+                Assert.AreEqual(origPos, buffer.LinePos);
+            }
+
+            [TestMethod]
+            public void ConsumeWhile_AdvancesToPositionWhenConditionTrue()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("abc"));
+                buffer.NextLine();
+                buffer.ConsumeWhile(c => c != 'c');
+                Assert.AreEqual(2, buffer.LinePos);
+            }
+
+            [TestMethod]
+            public void ConsumeWhile_AdvancesToEndOfLineIfConditionNeverTrue()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("abc"));
+                buffer.NextLine();
+                buffer.ConsumeWhile(c => c != 'd');
+                Assert.AreEqual(3, buffer.LinePos);
+            }
+
+            [TestMethod]
+            public void ConsumeWhile_DoesNotAdvanceToNextLine()
+            {
+                var buffer = new CsvReader.CsvReader.Buffer(new StringReader($"abc{Environment.NewLine}d"));
+                buffer.NextLine();
+                buffer.ConsumeWhile(c => c != 'd');
+                Assert.AreEqual(0, buffer.LineNumber);
             }
         }
     }
