@@ -129,19 +129,6 @@ namespace CsvReader
             }
         }
 
-        private readonly Buffer _buffer;
-        private readonly HashSet<char> _delimiters = new HashSet<char> { ',' };
-
-        public CsvReader(TextReader textReader)
-        {
-            _buffer = new Buffer(textReader);
-        }
-
-        public static CsvReader Parse(string text)
-        {
-            return new CsvReader(new StringReader(text));
-        }
-
         private void ConsumeWhitespace(Buffer buffer)
         {
             buffer.ConsumeWhile(c => char.IsWhiteSpace(c));
@@ -209,8 +196,27 @@ namespace CsvReader
                 return ConsumeUnquotedValue(buffer);
         }
 
+        private readonly Buffer _buffer;
+        private readonly HashSet<char> _delimiters = new HashSet<char> { ',' };
+
         /// <summary>
-        /// Returns the next record of values or null if the end of the stream has been reached.
+        /// Initialize for a TextReader.
+        /// </summary>
+        public CsvReader(TextReader textReader)
+        {
+            _buffer = new Buffer(textReader);
+        }
+
+        /// <summary>
+        /// Initialize for a string.
+        /// </summary>
+        public static CsvReader Parse(string text)
+        {
+            return new CsvReader(new StringReader(text));
+        }
+
+        /// <summary>
+        /// Returns the next record of values or null if the end of the data has been reached.
         /// </summary>
         public IEnumerable<string> ReadRecord()
         {
