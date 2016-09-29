@@ -7,7 +7,7 @@ namespace CsvReaderUnitTest
     [TestClass]
     public class CsvReaderUnitTest
     {
-        #region Values
+        #region Unquoted Values
 
         [TestMethod]
         public void ReadRecord_ReturnsValuesDelimitedByComma()
@@ -31,24 +31,66 @@ namespace CsvReaderUnitTest
         }
 
         [TestMethod]
-        public void ReadRecord_PreservesWhitespaceWithinValues()
+        public void ReadRecord_PreservesWhitespaceWithinValue()
         {
             var values = CsvReader.CsvReader.Parse("a b\tc").ReadRecord();
             Assert.AreEqual("a b\tc", values.First());
         }
 
+        /// <summary>
+        /// This might be controversial behavior since some CSV descriptions say whitespace 
+        /// should not be ignored.  Maybe there should be an option to control this behavior.
+        /// </summary>
         [TestMethod]
-        public void ReadRecord_IgnoresWhitespaceAroundValues()
+        public void ReadRecord_IgnoresWhitespaceAroundValue()
         {
             var values = CsvReader.CsvReader.Parse(" a ,\tb\t").ReadRecord();
             CollectionAssert.AreEqual(new[] { "a", "b" }, values.ToArray());
         }
 
         [TestMethod]
+        public void ReadRecord_Propagates_ForQuoteInUnquotedValue()
+        {
+            ExceptionAssert.Propagates<CsvReader.CsvReader.QuoteInUnquotedValueException>(
+                () => CsvReader.CsvReader.Parse(@"a""").ReadRecord());
+        }
+
+        // NOTE: This test is wrong if one must obey the rule that an unquoted value cannot contain a quote.
+        //[TestMethod]
+        //public void ReadRecord_TreatsQuoteAsRegularTextIfValueStartsWithNonQuote()
+        //{
+        //    var values = CsvReader.CsvReader.Parse(@"x""a,b""""").ReadRecord();
+        //    CollectionAssert.AreEqual(new[] { @"x""a", @"b""""" }, values.ToArray());
+        //}
+
+        #endregion
+
+        #region Quoted Values
+        
+        [TestMethod]
+        public void ReadRecord_IncludesAllWhitespaceInQuotedValue()
+        {
+            var values = CsvReader.CsvReader.Parse(@""" a b """).ReadRecord();
+            Assert.AreEqual(" a b ", values.First());
+        }
+
+        /// <summary>
+        /// This might be controversial behavior since some CSV descriptions say whitespace 
+        /// should not be ignored.  For an unquoted value I think it could go either way.  
+        /// But, for a quoted value it makes no sense to include anything outside of the quotes.
+        /// </summary>
+        [TestMethod]
+        public void ReadRecord_ExcludesWhitespaceOutsideOfQuotedValue()
+        {
+            var values = CsvReader.CsvReader.Parse(@" ""ab""\t").ReadRecord();
+            Assert.AreEqual("ab", values.First());
+        }
+
+        [TestMethod]
         public void ReadRecord_IncludesCommaInQuotedValue()
         {
             var values = CsvReader.CsvReader.Parse(@"""a,b""").ReadRecord();
-            CollectionAssert.AreEqual(new[] { "a,b" }, values.ToArray());
+            Assert.AreEqual("a,b", values.First());
         }
 
         [TestMethod]
@@ -82,20 +124,6 @@ namespace CsvReaderUnitTest
             ExceptionAssert.Propagates<CsvReader.CsvReader.TextAfterQuotedValueException>(
                 () => CsvReader.CsvReader.Parse(@"""a""x").ReadRecord());
         }
-
-        [TestMethod]
-        public void ReadRecord_PropagatesForUnquotedValueWithQuote()
-        {
-            ExceptionAssert.Propagates<CsvReader.CsvReader.QuoteInUnquotedValueException>(
-                () => CsvReader.CsvReader.Parse(@"a""").ReadRecord());
-        }
-
-        //[TestMethod]
-        //public void ReadRecord_TreatsQuoteAsRegularTextIfValueStartsWithNonQuote()
-        //{
-        //    var values = CsvReader.CsvReader.Parse(@"x""a,b""""").ReadRecord();
-        //    CollectionAssert.AreEqual(new[] { @"x""a", @"b""""" }, values.ToArray());
-        //}
 
         #endregion
 

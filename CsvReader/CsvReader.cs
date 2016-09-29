@@ -102,8 +102,8 @@ namespace CsvReader
             var startPos = buffer.LinePos;
             buffer.ConsumeWhile(c => c != ',');
             string value = buffer.SubstringConsumed(startPos);
-            if (!buffer.EndOfLine)
-                buffer.ConsumeChar(); // ','
+            //if (!buffer.EndOfLine)
+            //    buffer.ConsumeChar(); // ','
             value = value.TrimEnd();
             int quotePos = value.IndexOf('"');
             if (quotePos != -1)
@@ -114,7 +114,7 @@ namespace CsvReader
         private string ConsumeQuotedValue(Buffer buffer)
         {
             var startPos = buffer.LinePos;
-            buffer.ConsumeChar();
+            buffer.ConsumeChar(); // start '"'
             bool done = false;
             string value = "";
             while (!done)
@@ -128,9 +128,9 @@ namespace CsvReader
                 }
                 else
                 {
-                    buffer.ConsumeChar();
+                    buffer.ConsumeChar(); // end or escape '"'
                     if (!buffer.EndOfLine && buffer.Char == '"')
-                        buffer.ConsumeChar(); // jump over doubled quote; and continue reading string
+                        buffer.ConsumeChar(); // escaped '"'
                     else
                     {
                         while (!buffer.EndOfLine)
@@ -149,8 +149,8 @@ namespace CsvReader
         private string ConsumeValue(Buffer buffer)
         {
             ConsumeWhitespace(buffer);
-            //if (pos >= text.Length)
-            //return "";
+            if (buffer.EndOfLine)
+                return "";
             if (buffer.Char == '"')
                 return ConsumeQuotedValue(buffer);
             else
@@ -177,9 +177,13 @@ namespace CsvReader
                 return null;
 
             var values = new List<string>();
-            while (!_buffer.EndOfLine)
+            while (true)
+            {
                 values.Add(ConsumeValue(_buffer));
-            return values;
+                if (_buffer.EndOfLine)
+                    return values;
+                _buffer.ConsumeChar();
+            }
         }
     }
 }
