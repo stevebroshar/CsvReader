@@ -41,6 +41,8 @@ namespace CsvReader
     /// </remarks>
     public sealed class CsvReader
     {
+        #region Helper Classes
+
         internal sealed class Context
         {
             public Context(int line, int column)
@@ -86,6 +88,7 @@ namespace CsvReader
             public TextAfterQuotedValueException(Context context) : 
                 base("Text after quoted value", context) { }
         }
+
         internal sealed class QuoteStartWithoutEndException : CsvException
         {
             public QuoteStartWithoutEndException(Context context) :
@@ -169,7 +172,14 @@ namespace CsvReader
             }
         }
 
-        private void ConsumeWhitespace(Buffer buffer)
+        #endregion
+
+        private const char Quote = '"';
+        private readonly Buffer _buffer;
+        private HashSet<char> _delimiters = new HashSet<char> { ',' };
+        private HashSet<char> _commentChars;
+
+        private static void ConsumeWhitespace(Buffer buffer)
         {
             buffer.ConsumeWhile(char.IsWhiteSpace);
         }
@@ -180,7 +190,7 @@ namespace CsvReader
             buffer.ConsumeWhile(c => !_delimiters.Contains(c));
             string value = buffer.SubstringConsumed(startPos);
             value = value.TrimEnd();
-            int quotePos = value.IndexOf('"');
+            int quotePos = value.IndexOf(Quote);
             if (quotePos != -1)
                 throw new QuoteInUnquotedValueException(new Context(buffer, quotePos));
             return value;
@@ -190,12 +200,12 @@ namespace CsvReader
         {
             var startContext = new Context(buffer.LineNumber, buffer.LinePos);
             var startPos = buffer.LinePos;
-            buffer.ConsumeChar(); // start '"'
+            buffer.ConsumeChar(); // start quote
             bool done = false;
             string value = "";
             while (!done)
             {
-                buffer.ConsumeWhile(c => c != '"');
+                buffer.ConsumeWhile(c => c != Quote);
                 if (buffer.EndOfLine)
                 {
                     // value spans lines
@@ -207,10 +217,10 @@ namespace CsvReader
                 }
                 else
                 {
-                    buffer.ConsumeChar(); // end or escape '"'
-                    if (!buffer.EndOfLine && buffer.Char == '"')
+                    buffer.ConsumeChar(); // end or escape quote
+                    if (!buffer.EndOfLine && buffer.Char == Quote)
                     {
-                        buffer.ConsumeChar(); // escaped '"'
+                        buffer.ConsumeChar(); // escaped quote
                     }
                     else
                     {
@@ -235,14 +245,10 @@ namespace CsvReader
             ConsumeWhitespace(buffer);
             if (buffer.EndOfLine)
                 return "";
-            if (buffer.Char == '"')
+            if (buffer.Char == Quote)
                 return ConsumeQuotedValue(buffer);
             return ConsumeUnquotedValue(buffer);
         }
-
-        private readonly Buffer _buffer;
-        private HashSet<char> _delimiters = new HashSet<char> { ',' };
-        private HashSet<char> _commentChars;
 
         /// <summary>
         /// Sets the chars that delimit values.  Default is [','].
