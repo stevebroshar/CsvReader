@@ -76,6 +76,10 @@ comma and new line chars.
 appearing inside a field must be escaped by preceding it with
 another double quote.*  CHECK
 
+Lastly, some of the wording of the RFC is confusing to me.  It uses *fields*, but I call 
+them *values* ... I guess they can both apply.  It uses *file*, but the source may 
+not be a file at all.  The source is a stream or document (to steal a word from XML).
+
 # Features Not Covered By Standard
 
 There are several CSV parsing/reading features that beg to be considered:
