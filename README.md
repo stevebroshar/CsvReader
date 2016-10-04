@@ -1,4 +1,4 @@
-A CSV reader.  
+# A CSV reader
 
 There are so many CSV readers in the world and none of them seem to work right.
 Many try to do too much making them too specialized and therefore not useful in general 
@@ -30,7 +30,7 @@ I'd say RFC4180 is incomplete if not wrong WRT quoted values.  But, should the w
 trimmed for unquoted values?  Hmm.  Who knows?  Let's make it optional.  I'm picking trimmed
 as default since it makes sense to me. Sorry RFC4180.
 
-## Quote in Unquoted Value
+## Quote in Unquoted Value [TODO]
 RFC4180 says that an unquoted value should NOT contain a quote so I added checking -- 
 propagating an exception if found.  But, I wonder whether consumers might sometimes like to
 relax that rule.  It's easy to not treat a quote as special when the value is not 
@@ -46,6 +46,6 @@ since it's normal CSV behavior.
 
 ## References
 Some documents that describe the CSV format:
-https://en.wikipedia.org/wiki/Comma-separated_values
-https://tools.ietf.org/html/rfc4180
-http://www.computerhope.com/issues/ch001356.htm
+ - https://en.wikipedia.org/wiki/Comma-separated_values
+ - https://tools.ietf.org/html/rfc4180
+ - http://www.computerhope.com/issues/ch001356.htm
