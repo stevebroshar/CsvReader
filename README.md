@@ -12,25 +12,25 @@ standard for CSV, correct is somewhat subjective.  This is written to conform to
 obvious aspects of CSV and supports switches to control some of the more contentious 
 behaviors ... such as:
 
-Custom Delimiters
+## Custom Delimiters
 Why would someone want to use a delimiter other than comma ... for something called "COMMA
 separated values"?  Well, tab is somewhat common.  And, the implementation is easy and the 
 performance impact is none.  So why not?  See SetDelimiters().
 
-Comment Lines
+## Comment Lines
 There is no mention of comment lines in the psuedo-official documents about CSV. But there's
 plenty of talk about people using comment lines.  So, it seems the people want this feature.
 So, why not?  I was able to add it with very minimal performance impact.  See 
 SetCommentChars().
 
-Trim Whitespace [TODO: implemented this]
+## Trim Whitespace [TODO: implemented this]
 RFC4180 says that whitespace should not be trimmed.  But, consider the quoted value.  Does
 that mean the whitespace before and after the quotes should be included?  That's nonesense!
 I'd say RFC4180 is incomplete if not wrong WRT quoted values.  But, should the whitespace be
 trimmed for unquoted values?  Hmm.  Who knows?  Let's make it optional.  I'm picking trimmed
 as default since it makes sense to me. Sorry RFC4180.
 
-Quote in Unquoted Value
+## Quote in Unquoted Value
 RFC4180 says that an unquoted value should NOT contain a quote so I added checking -- 
 propagating an exception if found.  But, I wonder whether consumers might sometimes like to
 relax that rule.  It's easy to not treat a quote as special when the value is not 
@@ -44,6 +44,7 @@ TextFieldParser.HasFieldsEnclosedInQuotes is about.  Maybe this should have a si
 switch.  I'd call it something better like SupportQuotedValues -- defaulting to true ... 
 since it's normal CSV behavior.
 
+## References
 Some documents that describe the CSV format:
 https://en.wikipedia.org/wiki/Comma-separated_values
 https://tools.ietf.org/html/rfc4180
