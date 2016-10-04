@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Scb;
 
 namespace CsvReaderUnitTest
 {
@@ -13,28 +14,28 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_ReturnsValuesDelimitedByComma()
         {
-            var values = CsvReader.CsvReader.Parse("a,b,c").ReadRecord();
+            var values = CsvReader.Parse("a,b,c").ReadRecord();
             CollectionAssert.AreEqual(new[] { "a", "b", "c" }, values.ToArray());
         }
 
         [TestMethod]
         public void ReadRecord_ReturnsEmptyMiddleValue()
         {
-            var values = CsvReader.CsvReader.Parse(",a").ReadRecord();
+            var values = CsvReader.Parse(",a").ReadRecord();
             CollectionAssert.AreEqual(new[] { "", "a" }, values.ToArray());
         }
 
         [TestMethod]
         public void ReadRecord_ReturnsEmptyEndValue()
         {
-            var values = CsvReader.CsvReader.Parse("a,").ReadRecord();
+            var values = CsvReader.Parse("a,").ReadRecord();
             CollectionAssert.AreEqual(new[] { "a", "" }, values.ToArray());
         }
 
         [TestMethod]
         public void ReadRecord_PreservesWhitespaceWithinValue()
         {
-            var values = CsvReader.CsvReader.Parse("a b\tc").ReadRecord();
+            var values = CsvReader.Parse("a b\tc").ReadRecord();
             Assert.AreEqual("a b\tc", values.First());
         }
 
@@ -45,15 +46,15 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_IgnoresWhitespaceAroundValue()
         {
-            var values = CsvReader.CsvReader.Parse(" a ,\tb\t").ReadRecord();
+            var values = CsvReader.Parse(" a ,\tb\t").ReadRecord();
             CollectionAssert.AreEqual(new[] { "a", "b" }, values.ToArray());
         }
 
         [TestMethod]
         public void ReadRecord_Propagates_ForQuoteInUnquotedValue()
         {
-            ExceptionAssert.Propagates<CsvReader.CsvReader.QuoteInUnquotedValueException>(
-                () => CsvReader.CsvReader.Parse(@"a""").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.QuoteInUnquotedValueException>(
+                () => CsvReader.Parse(@"a""").ReadRecord());
         }
 
         // NOTE: This test is wrong if one must obey the rule that an unquoted value cannot contain a quote.
@@ -71,21 +72,21 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_ReturnsQuotedValuesDelimitedByComma()
         {
-            var values = CsvReader.CsvReader.Parse(@"""a"",""b"",""c""").ReadRecord();
+            var values = CsvReader.Parse(@"""a"",""b"",""c""").ReadRecord();
             CollectionAssert.AreEqual(new[] { "a", "b", "c" }, values.ToArray());
         }
 
         [TestMethod]
         public void ReadRecord_ReturnsQuotedAndUnquotedValues()
         {
-            var values = CsvReader.CsvReader.Parse(@"a,""b"",c,""d""").ReadRecord();
+            var values = CsvReader.Parse(@"a,""b"",c,""d""").ReadRecord();
             CollectionAssert.AreEqual(new[] { "a", "b", "c", "d" }, values.ToArray());
         }
 
         [TestMethod]
         public void ReadRecord_IncludesAllWhitespaceInQuotedValue()
         {
-            var values = CsvReader.CsvReader.Parse(@""" a b """).ReadRecord();
+            var values = CsvReader.Parse(@""" a b """).ReadRecord();
             Assert.AreEqual(" a b ", values.First());
         }
 
@@ -97,21 +98,21 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_ExcludesWhitespaceOutsideOfQuotedValue()
         {
-            var values = CsvReader.CsvReader.Parse(" \"ab\"\t").ReadRecord();
+            var values = CsvReader.Parse(" \"ab\"\t").ReadRecord();
             Assert.AreEqual("ab", values.First());
         }
 
         [TestMethod]
         public void ReadRecord_IncludesCommaInQuotedValue()
         {
-            var values = CsvReader.CsvReader.Parse(@"""a,b""").ReadRecord();
+            var values = CsvReader.Parse(@"""a,b""").ReadRecord();
             Assert.AreEqual("a,b", values.First());
         }
 
         [TestMethod]
         public void ReadRecord_IncludesNewLineInQuotedValue()
         {
-            var values = CsvReader.CsvReader.Parse($@"""a{Environment.NewLine}b{Environment.NewLine}c""").ReadRecord();
+            var values = CsvReader.Parse($@"""a{Environment.NewLine}b{Environment.NewLine}c""").ReadRecord();
             Assert.AreEqual($"a{Environment.NewLine}b{Environment.NewLine}c", values.First());
         }
 
@@ -122,42 +123,42 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_IncludesEmptyLineInQuotedValue()
         {
-            var values = CsvReader.CsvReader.Parse($@"""a{Environment.NewLine}{Environment.NewLine}b""").ReadRecord();
+            var values = CsvReader.Parse($@"""a{Environment.NewLine}{Environment.NewLine}b""").ReadRecord();
             Assert.AreEqual($"a{Environment.NewLine}{Environment.NewLine}b", values.First());
         }
 
         [TestMethod]
         public void ReadRecord_Propagates_ForStartQuoteWitNoMatchingEnd_InLastLine()
         {
-            ExceptionAssert.Propagates<CsvReader.CsvReader.QuoteStartWithoutEndException>(
-                () => CsvReader.CsvReader.Parse(@"""a").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.QuoteStartWithoutEndException>(
+                () => CsvReader.Parse(@"""a").ReadRecord());
         }
 
         [TestMethod]
         public void ReadRecord_Propagates_ForStartQuoteWitNoMatchingEnd_InNonLastLine()
         {
-            ExceptionAssert.Propagates<CsvReader.CsvReader.QuoteStartWithoutEndException>(
-                () => CsvReader.CsvReader.Parse($@"""a{Environment.NewLine}b").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.QuoteStartWithoutEndException>(
+                () => CsvReader.Parse($@"""a{Environment.NewLine}b").ReadRecord());
         }
 
         [TestMethod]
         public void ReadRecord_TreatsDoubledQuotesAsSingleInsideQuotedValue()
         {
-            var values = CsvReader.CsvReader.Parse(@"""""""a""""b""""""").ReadRecord();
+            var values = CsvReader.Parse(@"""""""a""""b""""""").ReadRecord();
             Assert.AreEqual(@"""a""b""", values.First());
         }
 
         [TestMethod]
         public void ReadRecord_Propagates_ForTextAfterQuotedValue()
         {
-            ExceptionAssert.Propagates<CsvReader.CsvReader.TextAfterQuotedValueException>(
-                () => CsvReader.CsvReader.Parse(@"""a""x,b").ReadRecord());
-            ExceptionAssert.Propagates<CsvReader.CsvReader.TextAfterQuotedValueException>(
-                () => CsvReader.CsvReader.Parse(@"""a"" x,b").ReadRecord());
-            ExceptionAssert.Propagates<CsvReader.CsvReader.TextAfterQuotedValueException>(
-                () => CsvReader.CsvReader.Parse(@"""a""x").ReadRecord());
-            ExceptionAssert.Propagates<CsvReader.CsvReader.TextAfterQuotedValueException>(
-                () => CsvReader.CsvReader.Parse(@"""a"" x").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.TextAfterQuotedValueException>(
+                () => CsvReader.Parse(@"""a""x,b").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.TextAfterQuotedValueException>(
+                () => CsvReader.Parse(@"""a"" x,b").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.TextAfterQuotedValueException>(
+                () => CsvReader.Parse(@"""a""x").ReadRecord());
+            ExceptionAssert.Propagates<CsvReader.TextAfterQuotedValueException>(
+                () => CsvReader.Parse(@"""a"" x").ReadRecord());
         }
 
         #endregion
@@ -173,7 +174,7 @@ namespace CsvReaderUnitTest
         public void ReadRecord_ReturnsAllValuesOfRecord_WhenCountDiffersFromRecordToRecord()
         {
             var text = $"a,b,c{Environment.NewLine}d{Environment.NewLine}e,f";
-            var reader = CsvReader.CsvReader.Parse(text);
+            var reader = CsvReader.Parse(text);
             Assert.AreEqual(3, reader.ReadRecord().Count());
             Assert.AreEqual(1, reader.ReadRecord().Count());
             Assert.AreEqual(2, reader.ReadRecord().Count());
@@ -182,7 +183,7 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_ReturnsNullAfterLastLine()
         {
-            var reader = CsvReader.CsvReader.Parse("a,b,c");
+            var reader = CsvReader.Parse("a,b,c");
             reader.ReadRecord();
             Assert.IsNull(reader.ReadRecord());
         }
@@ -190,7 +191,7 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_IgnoresEmptyLastLine()
         {
-            var reader = CsvReader.CsvReader.Parse($"a{Environment.NewLine}");
+            var reader = CsvReader.Parse($"a{Environment.NewLine}");
             Assert.AreEqual("a", reader.ReadRecord().First());
             Assert.IsNull(reader.ReadRecord());
         }
@@ -198,7 +199,7 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_IgnoresEmptyMidLine()
         {
-            var reader = CsvReader.CsvReader.Parse($"a{Environment.NewLine}{Environment.NewLine}b");
+            var reader = CsvReader.Parse($"a{Environment.NewLine}{Environment.NewLine}b");
             Assert.AreEqual("a", reader.ReadRecord().First());
             Assert.AreEqual("b", reader.ReadRecord().First());
         }
@@ -206,7 +207,7 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_IgnoresWhitespaceLine()
         {
-            var reader = CsvReader.CsvReader.Parse($"a{Environment.NewLine} \t{Environment.NewLine}b");
+            var reader = CsvReader.Parse($"a{Environment.NewLine} \t{Environment.NewLine}b");
             Assert.AreEqual("a", reader.ReadRecord().First());
             Assert.AreEqual("b", reader.ReadRecord().First());
         }
@@ -214,7 +215,7 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_IgnoresMultipleWhitespaceLines()
         {
-            var reader = CsvReader.CsvReader.Parse($"a{Environment.NewLine} \t{Environment.NewLine} \t{Environment.NewLine}b");
+            var reader = CsvReader.Parse($"a{Environment.NewLine} \t{Environment.NewLine} \t{Environment.NewLine}b");
             Assert.AreEqual("a", reader.ReadRecord().First());
             Assert.AreEqual("b", reader.ReadRecord().First());
         }
@@ -226,7 +227,7 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_ReturnsValuesDelimitedByColonOrSemicolon()
         {
-            var reader = CsvReader.CsvReader.Parse("a:b;c");
+            var reader = CsvReader.Parse("a:b;c");
             reader.SetDelimiters(':', ';');
             CollectionAssert.AreEqual(new[] { "a", "b", "c" }, reader.ReadRecord().ToArray());
         }
@@ -238,7 +239,7 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_IgnoresLineStartingWithCommentChar()
         {
-            var reader = CsvReader.CsvReader.Parse("#comment");
+            var reader = CsvReader.Parse("#comment");
             reader.SetCommentChars('#', '$');
             Assert.IsNull(reader.ReadRecord());
         }
@@ -246,7 +247,7 @@ namespace CsvReaderUnitTest
         [TestMethod]
         public void ReadRecord_IgnoresLinesStartingWithCommentChar()
         {
-            var reader = CsvReader.CsvReader.Parse($"a{Environment.NewLine}#comment{Environment.NewLine}b{Environment.NewLine}$comment{Environment.NewLine}c");
+            var reader = CsvReader.Parse($"a{Environment.NewLine}#comment{Environment.NewLine}b{Environment.NewLine}$comment{Environment.NewLine}c");
             reader.SetCommentChars('#', '$');
             Assert.AreEqual("a", reader.ReadRecord().First());
             Assert.AreEqual("b", reader.ReadRecord().First());
@@ -261,14 +262,14 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void LineNumber_IsMinusOneBeforeFirstRead()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                var buffer = new CsvReader.Buffer(new StringReader(""));
                 Assert.AreEqual(-1, buffer.LineNumber);
             }
 
             [TestMethod]
             public void NextLine_IncrementsLineNumber()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader($"a{Environment.NewLine}b{Environment.NewLine}c"));
+                var buffer = new CsvReader.Buffer(new StringReader($"a{Environment.NewLine}b{Environment.NewLine}c"));
                 buffer.NextLine();
                 Assert.AreEqual(0, buffer.LineNumber);
                 buffer.NextLine();
@@ -278,7 +279,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void NextLine_SetsLinePosToZero()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader($"a{Environment.NewLine}b{Environment.NewLine}c"));
+                var buffer = new CsvReader.Buffer(new StringReader($"a{Environment.NewLine}b{Environment.NewLine}c"));
                 buffer.NextLine();
                 buffer.ConsumeChar();
                 Assert.IsTrue(buffer.LinePos != 0);
@@ -289,7 +290,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void Char_ReturnsCharAtLinePos()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("abc"));
+                var buffer = new CsvReader.Buffer(new StringReader("abc"));
                 buffer.NextLine();
                 Assert.AreEqual('a', buffer.Char);
                 buffer.ConsumeChar();
@@ -302,7 +303,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void Char_Propagates_AtEndOfLine()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                var buffer = new CsvReader.Buffer(new StringReader(""));
                 buffer.NextLine();
                 Assert.IsTrue(buffer.EndOfLine);
                 ExceptionAssert.Propagates<NullReferenceException>(() =>
@@ -314,7 +315,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void ConsumeChar_IncrementsLinePos()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("abc"));
+                var buffer = new CsvReader.Buffer(new StringReader("abc"));
                 buffer.NextLine();
                 var origPos = buffer.LinePos;
                 buffer.ConsumeChar();
@@ -324,7 +325,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void ConsumeChar_DoesNotIncrementLinePosWhenAtEndOfLine()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                var buffer = new CsvReader.Buffer(new StringReader(""));
                 buffer.NextLine();
                 Assert.IsTrue(buffer.EndOfLine);
                 var origPos = buffer.LinePos;
@@ -335,13 +336,13 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void EndOfData_IsFalseBeforeFirstRead()
             {
-                Assert.IsFalse(new CsvReader.CsvReader.Buffer(new StringReader("")).EndOfData);
+                Assert.IsFalse(new CsvReader.Buffer(new StringReader("")).EndOfData);
             }
 
             [TestMethod]
             public void EndOfData_IsTrueAfterReadLastLine()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                var buffer = new CsvReader.Buffer(new StringReader(""));
                 buffer.NextLine();
                 Assert.IsTrue(buffer.EndOfData);
             }
@@ -349,13 +350,13 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void EndOfLine_IsTrueBeforeFirstRead()
             {
-                Assert.IsTrue(new CsvReader.CsvReader.Buffer(new StringReader("")).EndOfLine);
+                Assert.IsTrue(new CsvReader.Buffer(new StringReader("")).EndOfLine);
             }
 
             [TestMethod]
             public void EndOfLine_IsTrueAfterReadEmptyLine()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader(""));
+                var buffer = new CsvReader.Buffer(new StringReader(""));
                 buffer.NextLine();
                 Assert.IsTrue(buffer.EndOfLine);
             }
@@ -363,7 +364,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void EndOfLine_IsFalseAfterReadNonEmptyLine()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("x"));
+                var buffer = new CsvReader.Buffer(new StringReader("x"));
                 buffer.NextLine();
                 Assert.IsFalse(buffer.EndOfLine);
             }
@@ -371,7 +372,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void EndOfLine_IsFalseAfterConsumeLastCharOfLine()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("x"));
+                var buffer = new CsvReader.Buffer(new StringReader("x"));
                 buffer.NextLine();
                 buffer.ConsumeChar();
                 Assert.IsTrue(buffer.EndOfLine);
@@ -380,7 +381,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void ConsumeWhile_DoesNotAdvancePositionIfConditionTrue()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("x"));
+                var buffer = new CsvReader.Buffer(new StringReader("x"));
                 buffer.NextLine();
                 buffer.ConsumeWhile(c => true);
                 var origPos = buffer.LinePos;
@@ -390,7 +391,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void ConsumeWhile_AdvancesToPositionWhenConditionTrue()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("abc"));
+                var buffer = new CsvReader.Buffer(new StringReader("abc"));
                 buffer.NextLine();
                 buffer.ConsumeWhile(c => c != 'c');
                 Assert.AreEqual(2, buffer.LinePos);
@@ -399,7 +400,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void ConsumeWhile_AdvancesToEndOfLineIfConditionNeverTrue()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader("abc"));
+                var buffer = new CsvReader.Buffer(new StringReader("abc"));
                 buffer.NextLine();
                 buffer.ConsumeWhile(c => c != 'd');
                 Assert.AreEqual(3, buffer.LinePos);
@@ -408,7 +409,7 @@ namespace CsvReaderUnitTest
             [TestMethod]
             public void ConsumeWhile_DoesNotAdvanceToNextLine()
             {
-                var buffer = new CsvReader.CsvReader.Buffer(new StringReader($"abc{Environment.NewLine}d"));
+                var buffer = new CsvReader.Buffer(new StringReader($"abc{Environment.NewLine}d"));
                 buffer.NextLine();
                 buffer.ConsumeWhile(c => c != 'd');
                 Assert.AreEqual(0, buffer.LineNumber);

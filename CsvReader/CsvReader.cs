@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace CsvReader
+namespace Scb
 {
     /// <summary>
     /// A CSV reader.  There are so many CSV readers in the world and none of them seem to work right.

@@ -7,8 +7,8 @@
     <ProjectGuid>{AC08D6D7-DA99-4256-B75E-C485EDAD24EE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CsvReader</RootNamespace>
-    <AssemblyName>CsvReader</AssemblyName>
+    <RootNamespace>Scb</RootNamespace>
+    <AssemblyName>ScbCsvReader</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
