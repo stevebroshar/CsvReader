@@ -273,7 +273,7 @@ namespace Scb
         /// <summary>
         /// Returns the next record of values or null if the end of the data has been reached.
         /// </summary>
-        public IEnumerable<string> ReadRecord()
+        public IReadOnlyList<string> ReadRecord()
         {
             _buffer.NextLine();
             if (_buffer.EndOfData)
