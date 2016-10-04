@@ -9,8 +9,66 @@ that it's great ;)
 
 This implementation is intended to be fast and correct.  Of course, since there is no 
 standard for CSV, correct is somewhat subjective.  This is written to conform to the 
-obvious aspects of CSV and supports switches to control some of the more contentious 
-behaviors ... such as:
+obvious aspects of CSV and attempts to provide useful behavior for aspects that are less
+specified.
+
+Of the 7 rules defined in RFC4180, this does attempt to implement them fully -- except 
+where the RFC is confusing or IMO deficient/wrong.  Specifically:
+
+ 1. *Each record is located on a separate line, delimited by a line break (CRLF).* CHECK
+
+ 2. *The last record in the file may or may not have an ending line break.*  Further, any 
+blank line is ignored ... unless it's within a value.
+
+ 3. *There maybe an optional header line appearing as the first line
+of the file with the same format as normal record lines.  This
+header will contain names corresponding to the fields in the file
+and should contain the same number of fields as the records in
+the rest of the file (the presence or absence of the header line
+should be indicated via the optional "header" parameter of this
+MIME type).*  YEP.  But, when reading, there's no difference between 
+the header and the other lines.  So, there's no behavior realated to 
+this.  If the first line is a header, then first record will be the 
+header values. If not, then the first read will be the first data record.
+
+ 4. #4 is actually several separate rules, so I'll break it down:
+
+ a. *Within the header and each record, there may be one or more
+fields, separated by commas.  * Isn't this the same as #1?
+
+ b. *Each line should contain the same number of fields throughout the file.*
+Well, what does 'should' mean/imply? Is the entire file invalid if all 
+records don't have the same number of values?  That seems exteme ... well 
+it's the sort of extreme rule you fine in XML, but CSV tends to be less
+severe.  So, this class simply returns the number of values that each record 
+has.
+
+ c. *Spaces are considered part of a field and should not be ignored.*  I don't
+know about this one.  It seems pretty common that values are trimmed of Whitespace
+from the beginning and end.  But, the thing I really wonder about is quoted values.
+If whitespace is found before or after the enclosing quotes of a value, should that 
+be included in the value?  I think not!  Therefore, I have to doubt this rule
+altogether.
+
+ d. *The last field in the record must not be followed by a comma.*   What?  If the
+last value is blank, then the record ends in a comma.  I guess this may be related
+to enforcing the same number of values per record.
+
+ 5. *Each field may or may not be enclosed in double quotes (however
+some programs, such as Microsoft Excel, do not use double quotes
+at all).  If fields are not enclosed with double quotes, then
+double quotes may not appear inside the fields.*  CHECK
+
+ 6. *Fields containing line breaks (CRLF), double quotes, and commas
+should be enclosed in double-quotes.*  Should?  I would say must.
+
+ 7. *If double-quotes are used to enclose fields, then a double-quote
+appearing inside a field must be escaped by preceding it with
+another double quote.*  CHECK
+
+# Features Not Covered By Standard
+
+There are several CSV parsing/reading features that beg to be considered:
 
 ## Custom Delimiters
 Why would someone want to use a delimiter other than comma ... for something called "COMMA
