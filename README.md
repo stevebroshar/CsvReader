@@ -16,7 +16,8 @@ Of the 7 rules defined in RFC4180, this does attempt to implement them fully -- 
 where the RFC is confusing or IMO deficient/wrong.  Specifically:
 
  1. *Each record is located on a separate line, delimited by a line break (CRLF).*  
-Well, sortof. A new line terminates a record -- unless it's within a quoted value.
+ Well, sortof. A new line terminates a record -- unless it's within a quoted value. 
+ So, records never share a line, but a record can span multiple lines.
 
  2. *The last record in the file may or may not have an ending line break.*  Yep!  
 And further, any blank line is ignored ... unless it's within a quoted value.
