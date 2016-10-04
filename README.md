@@ -15,10 +15,11 @@ specified.
 Of the 7 rules defined in RFC4180, this does attempt to implement them fully -- except 
 where the RFC is confusing or IMO deficient/wrong.  Specifically:
 
- 1. *Each record is located on a separate line, delimited by a line break (CRLF).* CHECK
+ 1. *Each record is located on a separate line, delimited by a line break (CRLF).*  
+Well, sortof. A new line terminates a record -- unless it's within a quoted value.
 
- 2. *The last record in the file may or may not have an ending line break.*  Yep!  And further, any 
-blank line is ignored ... unless it's within a value.
+ 2. *The last record in the file may or may not have an ending line break.*  Yep!  
+And further, any blank line is ignored ... unless it's within a quoted value.
 
  3. *There maybe an optional header line appearing as the first line
 of the file with the same format as normal record lines.  This
@@ -34,7 +35,10 @@ header values. If not, then the first read will be the first data record.
  4. This one is actually several separate rules, so I'll break it down:
 
  a. *Within the header and each record, there may be one or more
-fields, separated by commas.*  Isn't this the same as rule 1?!?!
+fields, separated by commas.*  As this is the heart of CSV it seems to me
+that it should appear earlier than 4.  And, maybe clarify the wording as 
+something like: Each record (incluing the header) consists of values 
+separated by a comma.
 
  b. *Each line should contain the same number of fields throughout the file.*
 Well, what does 'should' mean/imply? Is the entire file invalid if all 
