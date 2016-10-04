@@ -17,7 +17,7 @@ where the RFC is confusing or IMO deficient/wrong.  Specifically:
 
  1. *Each record is located on a separate line, delimited by a line break (CRLF).* CHECK
 
- 2. *The last record in the file may or may not have an ending line break.*  Further, any 
+ 2. *The last record in the file may or may not have an ending line break.*  Yep!  And further, any 
 blank line is ignored ... unless it's within a value.
 
  3. *There maybe an optional header line appearing as the first line
@@ -31,7 +31,7 @@ the header and the other lines.  So, there's no behavior realated to
 this.  If the first line is a header, then first record will be the 
 header values. If not, then the first read will be the first data record.
 
- 4. #4 is actually several separate rules, so I'll break it down:
+ 4. This one is actually several separate rules, so I'll break it down:
 
  a. *Within the header and each record, there may be one or more
 fields, separated by commas.  * Isn't this the same as #1?
