@@ -45,7 +45,10 @@ Well, what does 'should' mean/imply? Is the entire file invalid if all
 records don't have the same number of values?  That seems exteme ... well 
 it's the sort of extreme rule you fine in XML, but CSV tends to be less
 severe.  So, this class simply returns the number of values that each record 
-has.
+has.  Maybe should add a strict mode that fails reading if any record is found
+more or less values than the first one.  But, that would be confusing unless
+the entire file was validated before returning any records -- which is different
+than the stream based reading of this implementation.
 
  c. *Spaces are considered part of a field and should not be ignored.*  I don't
 know about this one.  It seems pretty common that values are trimmed of whitespace
@@ -55,12 +58,13 @@ enclosing quotes of a value, should that be included in the value?  I think not!
 
  d. *The last field in the record must not be followed by a comma.*   What?  If the
 last value is blank, then the record ends in a comma.  I guess this may be related
-to enforcing the same number of values per record.
+to enforcing the same number of values per record.  I ignored this rule.
 
  5. *Each field may or may not be enclosed in double quotes (however
 some programs, such as Microsoft Excel, do not use double quotes
 at all).  If fields are not enclosed with double quotes, then
-double quotes may not appear inside the fields.*  CHECK
+double quotes may not appear inside the fields.*  CHECK ... but, one can easily ignore
+the validation part and allow an unquoted value to contain quotes.
 
  6. *Fields containing line breaks (CRLF), double quotes, and commas
 should be enclosed in double-quotes.*  Should?  I would say must.
