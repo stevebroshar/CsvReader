@@ -19,8 +19,8 @@ where the RFC is confusing or IMO deficient/wrong.  Specifically:
  Well, sortof. A new line terminates a record -- unless it's within a quoted value. 
  So, records never share a line, but a record can span multiple lines.
 
- 2. *The last record in the file may or may not have an ending line break.*  Yep!  
-And further, any blank line is ignored ... unless it's within a quoted value.
+ 2. *The last record in the file may or may not have an ending line break.*  
+ Yep!  And further, any blank line is ignored ... unless it's within a quoted value.
 
  3. *There maybe an optional header line appearing as the first line
 of the file with the same format as normal record lines.  This
@@ -28,10 +28,11 @@ header will contain names corresponding to the fields in the file
 and should contain the same number of fields as the records in
 the rest of the file (the presence or absence of the header line
 should be indicated via the optional "header" parameter of this
-MIME type).*  YEP.  But, when reading, there's no difference between 
-the header and the other lines.  So, there's no behavior realated to 
-this.  If the first line is a header, then first record will be the 
-header values. If not, then the first read will be the first data record.
+MIME type).*  
+YEP.  But, when reading, there's no difference between the header and other records.
+So, there's no behavior realated to this rule.  If the first line is a header, then 
+the first record will be the header values. If not, then the first read will be the 
+first data record.
 
  4. This one is actually several separate rules, so I'll break it down:
 
