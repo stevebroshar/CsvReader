@@ -12,6 +12,8 @@ standard for CSV, correct is somewhat subjective.  This is written to conform to
 obvious aspects of CSV and attempts to provide useful behavior for aspects that are less
 specified.
 
+# RFC4180
+
 Of the 7 rules defined in RFC4180, this does attempt to implement them fully -- except 
 where the RFC is confusing or IMO deficient/wrong.  Specifically:
 
@@ -80,7 +82,7 @@ Lastly, some of the wording of the RFC is confusing to me.  It uses *fields*, bu
 them *values* ... I guess they can both apply.  It uses *file*, but the source may 
 not be a file at all.  The source is a stream or document (to steal a word from XML).
 
-# Features Not Covered By Standard
+# Features Not Covered by the RFC
 
 There are several CSV parsing/reading features that beg to be considered:
 
