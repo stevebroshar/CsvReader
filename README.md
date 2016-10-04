@@ -67,7 +67,8 @@ double quotes may not appear inside the fields.*  CHECK ... but, one can easily 
 the validation part and allow an unquoted value to contain quotes.
 
  6. *Fields containing line breaks (CRLF), double quotes, and commas
-should be enclosed in double-quotes.*  Should?  I would say must.
+should be enclosed in double-quotes.*  Should?  I would say must ... at least for the
+comma and new line chars.
 
  7. *If double-quotes are used to enclose fields, then a double-quote
 appearing inside a field must be escaped by preceding it with
