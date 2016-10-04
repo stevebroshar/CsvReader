@@ -34,7 +34,7 @@ header values. If not, then the first read will be the first data record.
  4. This one is actually several separate rules, so I'll break it down:
 
  a. *Within the header and each record, there may be one or more
-fields, separated by commas.  * Isn't this the same as #1?
+fields, separated by commas.*  Isn't this the same as rule 1?!?!
 
  b. *Each line should contain the same number of fields throughout the file.*
 Well, what does 'should' mean/imply? Is the entire file invalid if all 
@@ -44,11 +44,10 @@ severe.  So, this class simply returns the number of values that each record
 has.
 
  c. *Spaces are considered part of a field and should not be ignored.*  I don't
-know about this one.  It seems pretty common that values are trimmed of Whitespace
-from the beginning and end.  But, the thing I really wonder about is quoted values.
-If whitespace is found before or after the enclosing quotes of a value, should that 
-be included in the value?  I think not!  Therefore, I have to doubt this rule
-altogether.
+know about this one.  It seems pretty common that values are trimmed of whitespace
+from the beginning and end so this class does that by default.  But, the thing I 
+really wonder about is quoted values. If whitespace is found before or after the 
+enclosing quotes of a value, should that be included in the value?  I think not!
 
  d. *The last field in the record must not be followed by a comma.*   What?  If the
 last value is blank, then the record ends in a comma.  I guess this may be related
