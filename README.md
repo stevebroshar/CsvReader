@@ -1,8 +1,9 @@
 # A CSV reader
 
-There are so many CSV readers in the world and none of them seem to work right.
+There are so many CSV readers in the world but none are quite right.
 Many try to do too much making them too specialized and therefore not useful in general 
-contexts.  Some are overly complicated to use.  Some run slow.  As an example, Microsoft's 
+contexts.  Some are overly complicated to use.  Some run slow and some just don't work right.  
+As an example, Microsoft's 
 TextFieldParser is pretty good, but has some fatal flaws.  It ignores blank lines in a quoted
 value.  And, it strips whitespace from quoted values.  And, it's relatively slow.  Other than
 that it's great ;)
