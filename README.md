@@ -16,7 +16,7 @@ specified.
 ## RFC4180
 
 Of the 7 rules defined in RFC4180, this does attempt to implement them fully -- except 
-where the RFC is confusing or IMO deficient/wrong.  Specifically:
+where the RFC is confusing or seems wrong.  Specifically:
 
  1. *Each record is located on a separate line, delimited by a line break (CRLF).*  
  Well, sortof. A new line terminates a record -- unless it's within a quoted value. 
