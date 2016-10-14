@@ -25,7 +25,7 @@ where the RFC is confusing or seems wrong.  Specifically:
  2. *The last record in the file may or may not have an ending line break.*  
  Yep!  And further, any blank line is ignored ... unless it's within a quoted value.
 
- 3. *There maybe an optional header line appearing as the first line
+ 3. *There maybe [sic] an optional header line appearing as the first line
 of the file with the same format as normal record lines.  This
 header will contain names corresponding to the fields in the file
 and should contain the same number of fields as the records in
