@@ -1,17 +1,12 @@
 # A CSV reader
 
-There are so many CSV readers in the world but none are quite right.
-Many try to do too much making them too specialized and therefore not useful in general 
-contexts.  Some are overly complicated to use.  Some run slow and some just don't work right.  
-As an example, Microsoft's 
-TextFieldParser is pretty good, but has some fatal flaws.  It ignores blank lines in a quoted
-value.  And, it strips whitespace from quoted values.  And, it's relatively slow.  Other than
-that it's great ;)
+There are so many CSV readers in the world but none are quite right. Many try to do too much making them too specialized and therefore not useful in general contexts.  Some are overly complicated to use.  Some run slow and some just don't work right. As an example, Microsoft's TextFieldParser is pretty good, but has some fatal flaws.  It ignores blank lines in a quoted value.  And, it strips whitespace from quoted values.  And, it's relatively slow.  Other than that it's great ;)
 
-This implementation is intended to be fast and correct.  Of course, since there is no 
-standard for CSV, correct is somewhat subjective.  This is written to conform to the 
-obvious aspects of CSV and attempts to provide useful behavior for aspects that are less
-specified.
+Sometimes reading a CSV is a simple as s.Split(",").  If that's all you need, then do that. Some people can get away with splitting using a regular expression.  But, as far as I know, if you need to read arbitrary complicated CSV data -- that might use all of its layout capabilities, then you need to use code of modest size and complixity -- such as this.
+
+This implementation is intended to be fast and correct.  Of course, since there is no standard for CSV, correct is somewhat subjective. This is written to conform to the obvious aspects of CSV and attempts to provide useful behavior for aspects that are less specified.
+
+The code is small enough to fit into a modestly sized file.  So ... at least for now ... I'm thinking of not bothering with creating a package -- with DLLs for one or more .NET frameworks. Just include the source file into your project.
 
 ## RFC4180
 
