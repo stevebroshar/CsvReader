@@ -37,7 +37,7 @@ first data record.
  a. *Within the header and each record, there may be one or more
 fields, separated by commas.*  As this is the heart of CSV it seems to me
 that it should appear earlier than 4.  And, maybe clarify the wording as 
-something like: Each record (incluing the header) consists of values 
+something like: Each record (including the header) consists of values 
 separated by a comma.
 
  b. *Each line should contain the same number of fields throughout the file.*
