@@ -266,7 +266,7 @@ namespace CsvReaderUnitTest
         #region Custom Delimiters
 
         [TestMethod]
-        public void ReadRecord_ReturnsValuesDelimitedByColonOrSemicolon()
+        public void ReadRecord_ReturnsValuesDelimitedByCustomDelimiters()
         {
             var reader = CsvReader.ForText("a:b;c");
             reader.SetDelimiters(':', ';');
