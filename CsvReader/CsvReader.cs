@@ -28,12 +28,10 @@ namespace Scb
     /// So, why not?  I was able to add it with very minimal performance impact.  See 
     /// SetCommentChars().
     /// 
-    /// Trim Whitespace [TODO: implemented this]
-    /// RFC4180 says that whitespace should not be trimmed.  But, consider the quoted value.  Does
-    /// that mean the whitespace before and after the quotes should be included?  That's nonesense!
-    /// I'd say RFC4180 is incomplete if not wrong WRT quoted values.  But, should the whitespace be
-    /// trimmed for unquoted values?  Hmm.  Who knows?  Let's make it optional.  I'm picking trimmed
-    /// as default since it makes sense to me. Sorry RFC4180.
+    /// Trim Whitespace
+    /// RFC4180 says that whitespace should not be trimmed. But, this class provides options to trim -- 
+    /// unquoted strings, quoted strings or both.  See TrimUnquotedValues, TrimQuotedValues and 
+    /// TrimValues.
     /// 
     /// Quote in Unquoted Value
     /// RFC4180 says that an unquoted value should NOT contain a quote so I added checking -- 
