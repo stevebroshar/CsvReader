@@ -29,9 +29,9 @@ namespace Scb
     /// SetCommentChars().
     /// 
     /// Trim Whitespace
-    /// RFC4180 says that whitespace should not be trimmed. But, this class provides options to trim -- 
-    /// unquoted strings, quoted strings or both.  See TrimUnquotedValues, TrimQuotedValues and 
-    /// TrimValues.
+    /// RFC4180 says that whitespace should not be trimmed and this is default behavior.  But, this
+    /// class provides options to trim -- unquoted values, quoted values or both.  See 
+    /// TrimUnquotedValues, TrimQuotedValues and TrimValues.
     /// 
     /// Quote in Unquoted Value
     /// RFC4180 says that an unquoted value should NOT contain a quote so I added checking -- 
