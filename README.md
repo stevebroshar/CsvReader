@@ -53,18 +53,13 @@ not be a file at all.  The source is a stream or document (to steal a word from 
 There are several CSV parsing/reading features that beg to be considered:
 
 ### Custom Delimiters
-Why would someone want to use a delimiter other than comma ... for something called "COMMA
-separated values"?  Well, tab is somewhat common.  And, the implementation is easy and the 
-performance impact is none.  So why not?  See SetDelimiters().
+Why would someone want to use a delimiter other than comma ... for something called "COMMA separated values"?  Well, tab is somewhat common.  And, the implementation is easy and the performance impact is none.  So why not?  See SetDelimiters().
 
 ### Comment Lines
-There is no mention of comment lines in the psuedo-official documents about CSV. But there's
-plenty of talk about people using comment lines.  So, it seems the people want this feature.
-So, why not?  I was able to add it with very minimal performance impact.  See 
-SetCommentChars().
+There is no mention of comment lines in the psuedo-official documents about CSV. But there's plenty of talk about people using comment lines.  So, it seems the people want this feature. So, why not?  I was able to add it with very minimal performance impact.  See SetCommentChars().
 
-### Trim Whitespace [TODO: implemented this]
-RFC4180 says that whitespace should not be trimmed.  But, this class provides options to trim it -- either for unquoted strings, quoted strings or both.  See TrimUnquotedValues, TrimQuotedValues and TrimValues.
+### Trim Whitespace
+RFC4180 says that whitespace should not be trimmed and this is default behavior.  But, this class provides options to trim -- unquoted values, quoted values or both.  See TrimUnquotedValues, TrimQuotedValues and TrimValues.
 
 ### Quote in Unquoted Value [TODO]
 RFC4180 says that an unquoted value should NOT contain a quote so I added checking -- 
