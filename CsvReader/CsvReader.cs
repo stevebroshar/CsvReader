@@ -100,6 +100,21 @@ namespace Scb
                     ++LineNumber;
             }
 
+            public void NextValueStartLine(HashSet<char> _commentChars)
+            {
+                while (true)
+                {
+                    NextLine();
+                    if (EndOfData)
+                        return;
+                    bool ignoreLine = 
+                        (_line.Trim().Length == 0 || 
+                        (_commentChars != null && _commentChars.Contains(_line[0])));
+                    if (!ignoreLine)
+                        return;
+                }
+            }
+
             /// <summary>
             /// Current line index.
             /// </summary>
@@ -144,6 +159,11 @@ namespace Scb
                         ++LinePos;
             }
 
+            public void ConsumeRest()
+            {
+                LinePos = _line.Length;
+            }
+
             /// <summary>
             /// Returns the substring of the current line from pos up to but not including the char
             /// as LinePos.
@@ -166,20 +186,22 @@ namespace Scb
         private HashSet<char> _delimiters = new HashSet<char> { ',' };
         private HashSet<char> _commentChars;
 
-        private static void ConsumeWhitespace(Buffer buffer)
-        {
-            buffer.ConsumeWhile(char.IsWhiteSpace);
-        }
+        public bool TrimUnquotedValues { get; set; }
+        public bool TrimQuotedValues { get; set; }
+        public bool TrimValues { set { TrimUnquotedValues = true; TrimQuotedValues = true; } }
 
-        private string ConsumeUnquotedValue(Buffer buffer)
+        private string ConsumeUnquotedValue(Buffer buffer, string leadingWhitespace)
         {
             var startPos = buffer.LinePos;
             buffer.ConsumeWhile(c => !_delimiters.Contains(c));
             string value = buffer.SubstringConsumed(startPos);
-            value = value.TrimEnd();
             int quotePos = value.IndexOf(Quote);
             if (quotePos != -1)
                 throw new QuoteInUnquotedValueException(buffer.Context(quotePos));
+            if (TrimUnquotedValues)
+                value = value.Trim();
+            else
+                value = leadingWhitespace + value;
             return value;
         }
 
@@ -189,7 +211,7 @@ namespace Scb
             var startPos = buffer.LinePos;
             buffer.ConsumeChar(); // start quote
             bool done = false;
-            string value = "";
+            string value = string.Empty;
             while (!done)
             {
                 buffer.ConsumeWhile(c => c != Quote);
@@ -214,7 +236,7 @@ namespace Scb
                         value += buffer.SubstringConsumed(startPos); // last part thru end quote
 
                         // check for text between end quote and delimiter
-                        ConsumeWhitespace(buffer);
+                        buffer.ConsumeWhile(char.IsWhiteSpace);
                         if (!buffer.EndOfLine && !_delimiters.Contains(buffer.Char))
                             throw new TextAfterQuotedValueException(buffer.Context());
 
@@ -224,17 +246,21 @@ namespace Scb
             }
             value = value.Substring(1, value.Length - 2); // remove enclosing quotes
             value = value.Replace(@"""""", @""""); // replace doubled quotes with single
+            if (TrimQuotedValues)
+                value = value.Trim();
             return value;
         }
 
         private string ConsumeValue(Buffer buffer)
         {
-            ConsumeWhitespace(buffer);
             if (buffer.EndOfLine)
-                return "";
+                return string.Empty;
+            int startPos = buffer.LinePos;
+            buffer.ConsumeWhile(char.IsWhiteSpace);
+            var leadingWhitespace = buffer.SubstringConsumed(startPos);
             if (buffer.Char == Quote)
                 return ConsumeQuotedValue(buffer);
-            return ConsumeUnquotedValue(buffer);
+            return ConsumeUnquotedValue(buffer, leadingWhitespace);
         }
 
         /// <summary>
@@ -263,9 +289,17 @@ namespace Scb
         }
 
         /// <summary>
-        /// Initialize for a string.
+        /// Convenience method to initialize for a string.
         /// </summary>
-        public static CsvReader Parse(string text)
+        /// <remarks>
+        /// StringReader implements IDisposable for .NET design reasons, but disposing does 
+        /// nothing.  Therefore, don't need to dispose it.  An alternative, would be to
+        /// return a class that is disposable ... yet disposing does nothing ... propagating 
+        /// the undesirable aspect of StringReader.  Also, would not want to displose a
+        /// TextReader passed to the ctor (other than from this method) since the consumer 
+        /// should be responsible for its lifetime.
+        /// </remarks>
+        public static CsvReader ForText(string text)
         {
             return new CsvReader(new StringReader(text));
         }
@@ -275,25 +309,12 @@ namespace Scb
         /// </summary>
         public IReadOnlyList<string> ReadRecord()
         {
-            _buffer.NextLine();
-            if (_buffer.EndOfData)
-                return null;
-
-            // consume whitespace lines
-            if (_commentChars != null)
-                if (!_buffer.EndOfLine & _commentChars.Contains(_buffer.Char))
-                    _buffer.ConsumeWhile(c=> true);
-            ConsumeWhitespace(_buffer);
-            while (!_buffer.EndOfData && _buffer.EndOfLine)
+            while (_buffer.EndOfLine)
             {
-                _buffer.NextLine();
-                if (_commentChars != null)
-                    if (!_buffer.EndOfLine && _commentChars.Contains(_buffer.Char))
-                        _buffer.ConsumeWhile(c => true);
-                ConsumeWhitespace(_buffer);
+                _buffer.NextValueStartLine(_commentChars);
+                if (_buffer.EndOfData)
+                    return null;
             }
-            if (_buffer.EndOfData)
-                return null;
 
             var values = new List<string>();
             while (true)
