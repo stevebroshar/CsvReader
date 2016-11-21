@@ -13,10 +13,10 @@ The code is small enough to fit into a modestly sized file.  So ... at least for
 Of the 7 rules defined in RFC4180, this does attempt to implement them fully -- except where the RFC is confusing or seems wrong.  Specifically:
 
  1. *Each record is located on a separate line, delimited by a line break (CRLF).*  
- Well, sortof. A new line terminates a record -- unless it's within a quoted value. So, records never share a line, but a record can span multiple lines.
+This rule is confusing.  I'd say new line _terminates_ a record, and only if it's not within a quoted value. Records never share a line, but a record can span multiple lines.  Put another way: new line can end a record, but not every new line ends a record.
 
  2. *The last record in the file may or may not have an ending line break.*  
- Yep!  And further, any blank line is ignored ... unless it's within a quoted value.
+Yep!  And further, any blank line is ignored ... unless it's within a quoted value.
 
  3. *There maybe [sic] an optional header line appearing as the first line of the file with the same format as normal record lines.  This header will contain names corresponding to the fields in the file and should contain the same number of fields as the records in the rest of the file (the presence or absence of the header line should be indicated via the optional "header" parameter of this MIME type).*
 YEP.  But, when reading, there's no difference between the header and other records. So, there's no behavior related to this rule.  If the first line is a header, then the first record will be the header values. If not, then the first read will be the first data record.
